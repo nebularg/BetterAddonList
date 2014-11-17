@@ -15,7 +15,7 @@ local L = setmetatable({}, {
 local sets = nil
 local nested = nil
 local character = nil
-local DEFAULT_SET = "__default"
+local DEFAULT_SET = "__default__"
 
 local function IsAddonProtected(index)
 	if not index then return end
@@ -254,6 +254,7 @@ StaticPopupDialogs["BETTER_ADDONLIST_ERROR_NAME"] = {
 	preferredIndex = 3,
 }
 
+-- sets menu
 do
 	local CURRENT_SET = nil
 	local list = {}
@@ -449,8 +450,10 @@ do
 	button:SetScript("OnClick", function(self)
 		ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 0, 0)
 	end)
+end
 
-
+-- lock icon toggle / memory usage
+do
 	local function OnClick(lock, button, down)
 		if IsShiftKeyDown() and button == "LeftButton" then
 			local index = lock:GetParent():GetID()
@@ -460,6 +463,7 @@ do
 	end
 
 	local lockIcons = {}
+	local memIcons = {}
 	for i=1, MAX_ADDONS_DISPLAYED do
 		local checkbox = _G["AddonListEntry"..i.."Enabled"]
 
@@ -473,33 +477,86 @@ do
 		lockIcons[i] = lock
 
 		checkbox:HookScript("OnClick", function(self, ...) OnClick(lock, ...) end)
+
+		local mem = CreateFrame("Button", nil, _G["AddonListEntry"..i], nil, i)
+		mem:SetSize(6, 32)
+		mem:SetPoint("RIGHT", checkbox, "LEFT", 1, 0)
+		mem:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+		memIcons[i] = mem
 	end
 
-	hooksecurefunc("AddonList_Update", function(self)
+	local updater = CreateFrame("Frame", nil, AddonList)
+	updater:SetScript("OnShow", function(self)
+		UpdateAddOnMemoryUsage()
+		if not self.timer then
+			self.timer = C_Timer.NewTicker(10, UpdateAddOnMemoryUsage)
+		end
+	end)
+	updater:SetScript("OnHide", function(self)
+		self.timer:Cancel()
+		self.timer = nil
+	end)
+
+	hooksecurefunc("AddonTooltip_Update", function(self)
+		local memory = self.memory
+		if memory then
+			local text = ""
+			if memory > 1000 then
+				memory = memory / 1000
+				text = ("Memory: %.02f MB"):format(memory)
+			else
+				text = ("Memory: %.0f KB"):format(memory)
+			end
+			GameTooltip:AddLine(text)
+		end
+	end)
+
+	hooksecurefunc("AddonList_Update", function()
 		local numAddons = GetNumAddOns()
 		for i=1, MAX_ADDONS_DISPLAYED do
 			local index = AddonList.offset + i
+			local entry = _G["AddonListEntry"..i]
 			local checkbox = _G["AddonListEntry"..i.."Enabled"]
 			local lockIcon = lockIcons[i]
+			local memIcon = memIcons[i]
 
 			if index > numAddons then
+				entry.memory = nil
+				memIcon:Hide()
 				lockIcon:Hide()
 				checkbox:Show()
 			else
 				local enabled = GetAddOnEnableState(character, index) > 0
-				checkbox:SetChecked(enabled)
-				if IsAddonProtected(index) then
-					lockIcon:Show()
-					checkbox:Hide()
+				if enabled then
+					local memory = GetAddOnMemoryUsage(index)
+					entry.memory = memory
+					local usage = memory/8000 -- just needed some baseline!
+					if usage > 1 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
+					elseif usage > 0.8 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
+					elseif usage > 0.6 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
+					elseif usage > 0.4 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
+					elseif usage > 0.2 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
+					else
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+					end
+					memIcon:Show()
 				else
-					lockIcon:Hide()
-					checkbox:Show()
+					entry.memory = nil
+					memIcon:Hide()
 				end
+
+				local protected = IsAddonProtected(index)
+				lockIcon:SetShown(protected)
+				checkbox:SetShown(not protected)
 			end
 		end
 	end)
 end
-
 
 function addon:EnableProtected()
 	EnableAddOn(ADDON_NAME, true)
