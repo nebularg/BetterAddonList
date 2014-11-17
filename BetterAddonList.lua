@@ -35,6 +35,7 @@ end
 local addon = CreateFrame("Frame")
 addon:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 addon:RegisterEvent("ADDON_LOADED")
+addon:RegisterEvent("PLAYER_LOGIN")
 addon:RegisterEvent("PLAYER_LOGOUT")
 
 function addon:ADDON_LOADED(name)
@@ -55,11 +56,26 @@ function addon:ADDON_LOADED(name)
 		BetterAddonListDB.protected = {}
 	end
 
+	character = UnitName("player")
+
 	hooksecurefunc("DisableAllAddOns", function()
 		self:EnableProtected()
 	end)
+end
 
-	character = UnitName("player")
+function addon:PLAYER_LOGIN()
+	-- make the panel movable
+	local mover = CreateFrame("Frame", "AddonListMover", AddonList)
+	mover:EnableMouse(true)
+	mover:SetPoint("TOP", AddonList, "TOP", 0, 10)
+	mover:SetWidth(500)
+	mover:SetHeight(38)
+	mover:SetScript("OnMouseDown", function(self) AddonList:StartMoving() end)
+	mover:SetScript("OnMouseUp", function(self) AddonList:StopMovingOrSizing() end)
+	AddonList:SetMovable(true)
+	AddonList:ClearAllPoints()
+	AddonList:SetPoint("CENTER")
+
 	-- default to showing the player profile
 	UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
 	UIDropDownMenu_SetText(AddonCharacterDropDown, character) -- don't show "Custom" ... this dropdown is weird.
@@ -109,8 +125,6 @@ function addon:ADDON_LOADED(name)
 	SlashCmdList["RELOADUI"] = function()
 		ReloadUI()
 	end
-
-	self.ADDON_LOADED = nil
 end
 
 function addon:PLAYER_LOGOUT()
