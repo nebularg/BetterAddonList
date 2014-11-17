@@ -531,15 +531,15 @@ do
 					local memory = GetAddOnMemoryUsage(index)
 					entry.memory = memory
 					local usage = memory/8000 -- just needed some baseline!
-					if usage > 1 then
+					if usage > 0.8 then
 						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
-					elseif usage > 0.8 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
 					elseif usage > 0.6 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
 					elseif usage > 0.4 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
 					elseif usage > 0.2 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
+					elseif usage > 0.1 then
 						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
 					else
 						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
