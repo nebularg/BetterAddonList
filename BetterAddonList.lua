@@ -2,8 +2,11 @@ local ADDON_NAME = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
 -- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2 UIDROPDOWNMENU_MENU_VALUE
--- GLOBALS: AddonList AddonList_Update AddonList_Enable AddonCharacterDropDown MAX_ADDONS_DISPLAYED GetAddOnEnableState
+-- GLOBALS: AddonList AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonCharacterDropDown AddonListScrollFrame AddonTooltip_BuildDeps GetAddOnEnableState
 -- GLOBALS: StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_GetSelectedValue UIDropDownMenu_SetSelectedValue UIDropDownMenu_SetText
+-- GLOBALS: ADDON_BUTTON_HEIGHT ADDON_DEPENDENCIES MAX_ADDONS_DISPLAYED SearchBoxTemplate_OnTextChanged GameTooltip C_Timer FauxScrollFrame_Update
+
+local AddonList_Update = AddonList_Update
 
 local L = setmetatable({}, {
 	__index = function(t, k)
@@ -76,11 +79,14 @@ function addon:PLAYER_LOGIN()
 	AddonList:ClearAllPoints()
 	AddonList:SetPoint("CENTER")
 
+	--UIPanelWindows["AddonList"].area = nil -- let the frame overlap over ui frames
+
 	-- default to showing the player profile
 	UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
 	UIDropDownMenu_SetText(AddonCharacterDropDown, character) -- don't show "Custom" ... this dropdown is weird.
 
 	-- save a list of enabled addons so that you can reset to it
+	-- could use AddonList.startStatus, but this is easier.
 	self:SaveSet(DEFAULT_SET)
 
 	SLASH_BETTERADDONLIST1 = "/addons"
@@ -98,24 +104,24 @@ function addon:PLAYER_LOGIN()
 		if command == "load" then
 			if sets[rest] then
 				self:LoadSet(rest)
-				self:Print("Enabled only addons in set \""..rest.."\".")
+				self:Print(L["Enabled only addons in set %q."]:format(rest))
 			else
-				self:Print("No set named \""..rest.."\".")
+				self:Print(L["No set named %q."]:format(rest))
 			end
 		elseif command == "unload" then
 			if sets[rest] then
 				self:DisableSet(rest)
-				self:Print("Disabled addons in set \""..rest.."\".")
+				self:Print(L["Disabled addons in set %q."]:format(rest))
 			else
-				self:Print("No set named \""..rest.."\".")
+				self:Print(L["No set named %q."]:format(rest))
 			end
 		elseif command == "disableall" then
 			DisableAllAddOns()
-			AddonList_Update()
-			self:Print("Disabled all addons.")
+			_G.AddonList_Update()
+			self:Print(L["Disabled all addons."])
 		elseif command == "reset" then
 			self:LoadSet(DEFAULT_SET)
-			self:Print("Reset addons to what was enabled at login.")
+			self:Print(L["Reset addons to what was enabled at login."])
 		end
 	end
 
@@ -540,11 +546,68 @@ do
 		return true
 	end
 
-	hooksecurefunc("AddonList_Update", function()
+	-- Update the panel my way
+	AddonList_Update = function()
+		if AddonList.searchList then
+			local numEntrys = #AddonList.searchList
+			for i=1, MAX_ADDONS_DISPLAYED do
+				local offset = AddonList.offset + i
+				local addonIndex = AddonList.searchList[offset]
+				local entry = _G["AddonListEntry"..i]
+				if offset > numEntrys then
+					entry:Hide()
+				else
+					-- aaaaand copy from AddonList_Update
+					local name, title, notes, loadable, reason, security = GetAddOnInfo(addonIndex)
+					local enabled = GetAddOnEnableState(character, addonIndex) > 0
+
+					local checkbox = _G["AddonListEntry"..i.."Enabled"]
+					checkbox:SetChecked(enabled)
+
+					local titleString = _G["AddonListEntry"..i.."Title"]
+					if loadable or ( enabled and (reason == "DEP_DEMAND_LOADED" or reason == "DEMAND_LOADED") ) then
+						titleString:SetTextColor(1.0, 0.78, 0.0)
+					elseif enabled and reason ~= "DEP_DISABLED" then
+						titleString:SetTextColor(1.0, 0.1, 0.1)
+					else
+						titleString:SetTextColor(0.5, 0.5, 0.5)
+					end
+					titleString:SetText(title or name)
+
+					local securityIcon = _G["AddonListEntry"..i.."SecurityIcon"]
+					if security == "SECURE" then
+						AddonList_SetSecurityIcon(securityIcon, 1)
+					elseif security == "INSECURE" then
+						AddonList_SetSecurityIcon(securityIcon, 2)
+					elseif security == "BANNED" then
+						AddonList_SetSecurityIcon(securityIcon, 3)
+					end
+					_G["AddonListEntry"..i.."Security"].tooltip = _G["ADDON_"..security]
+
+					local statusString = _G["AddonListEntry"..i.."Status"]
+					statusString:SetText((not enabled and reason) and _G["ADDON_"..reason] or "")
+
+					if enabled ~= AddonList.startStatus[addonIndex] and reason ~= "DEP_DISABLED" then
+						if enabled then
+							local lod = IsAddOnLoadOnDemand(addonIndex) and not IsAddOnLoaded(addonIndex)
+							AddonList_SetStatus(entry, lod, false, not lod)
+						else
+							AddonList_SetStatus(entry, false, false, true)
+						end
+					else
+						AddonList_SetStatus(entry, false, true, false)
+					end
+
+					entry:SetID(addonIndex)
+					entry:Show()
+				end
+			end
+
+			FauxScrollFrame_Update(AddonListScrollFrame, numEntrys, MAX_ADDONS_DISPLAYED, ADDON_BUTTON_HEIGHT)
+		end
+
 		local numAddons = GetNumAddOns()
 		for i=1, MAX_ADDONS_DISPLAYED do
-			local index = AddonList.offset + i
-
 			local entry = _G["AddonListEntry"..i]
 			local checkbox = _G["AddonListEntry"..i.."Enabled"]
 			local title = _G["AddonListEntry"..i.."Title"]
@@ -553,24 +616,25 @@ do
 			local lockIcon = lockIcons[i]
 			local memIcon = memIcons[i]
 
-			if index > numAddons then
+			local addonIndex = entry:GetID()
+			if addonIndex > numAddons then
 				entry.memory = nil
 				memIcon:Hide()
 				lockIcon:Hide()
 				checkbox:Show()
 			else
-				local enabled = GetAddOnEnableState(character, index) > 0
+				local enabled = GetAddOnEnableState(character, addonIndex) > 0
 				if enabled then
-					local depsEnabled = checkDeps(GetAddOnDependencies(index))
+					local depsEnabled = checkDeps(GetAddOnDependencies(addonIndex))
 					if not depsEnabled then
 						title:SetTextColor(1.0, 0.1, 0.1)
 						status:SetText(_G["ADDON_DEP_DISABLED"])
 					end
-					if IsAddOnLoadOnDemand(index) and not IsAddOnLoaded(index) and depsEnabled then
+					if IsAddOnLoadOnDemand(addonIndex) and not IsAddOnLoaded(addonIndex) and depsEnabled then
 						AddonList_SetStatus(entry, true, false, false)
 					end
 
-					local memory = GetAddOnMemoryUsage(index)
+					local memory = GetAddOnMemoryUsage(addonIndex)
 					entry.memory = memory
 					local usage = memory/8000 -- just needed some baseline!
 					if usage > 0.8 then
@@ -592,12 +656,132 @@ do
 					memIcon:Hide()
 				end
 
-				local protected = IsAddonProtected(index)
+				local protected = IsAddonProtected(addonIndex)
 				lockIcon:SetShown(protected)
 				checkbox:SetShown(not protected)
 			end
 		end
+	end
+	hooksecurefunc("AddonList_Update", AddonList_Update)
+end
+
+-- search
+do
+	-- bleh, less code than creating my own check button
+	AddonListForceLoad:ClearAllPoints()
+	AddonListForceLoad:SetPoint("LEFT", BetterAddonListSetsButton, "RIGHT", 2, 0)
+	local regions = {AddonListForceLoad:GetRegions()}
+	if regions[1]:GetWidth() > 88 then -- don't truncate if we don't have to to >.<
+		regions[1]:SetText(L["Load out of date"])
+	end
+	regions = nil
+
+	local strfind = string.find
+	local searchList = {}
+	local searchString = ""
+	local function OnTextChanged(self)
+		SearchBoxTemplate_OnTextChanged(self)
+		local oldText = searchString
+		searchString = self:GetText():lower()
+
+		if searchString == "" then
+			AddonList.searchList = nil
+			_G.AddonList_Update()
+		elseif oldText ~= searchString then
+			wipe(searchList)
+			for i=1, GetNumAddOns() do
+				local name, title, notes = GetAddOnInfo(i)
+				local enabled = GetAddOnEnableState(character, i) > 0
+				if strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)) then
+					searchList[#searchList+1] = i
+				end
+			end
+			AddonList.searchList = searchList
+			AddonList_Update()
+		end
+	end
+
+	local editBox = CreateFrame("EditBox", "BetterAddonListSearchBox", AddonList, "SearchBoxTemplate")
+	editBox:SetPoint("TOPRIGHT", -11, -33) -- -107 w/filter
+	--editBox:SetPoint("TOPLEFT", AddonList, "TOPRIGHT", -126, -33) -- -222 w/filter
+	editBox:SetSize(115, 20)
+	editBox:SetMaxLetters(40)
+	editBox:SetScript("OnTextChanged", OnTextChanged)
+
+	--[==[
+	local filterButton = CreateFrame("Button", "BetterAddonListFilterButton", AddonList, "UIMenuButtonStretchTemplate")
+	filterButton:SetPoint("LEFT", editBox, "RIGHT", 3, 0)
+	filterButton:SetSize(93, 22)
+	filterButton:SetText(FILTER)
+	filterButton:SetScript("OnClick", function(self)
+		PlaySound("igMainMenuOptionCheckBoxOn")
+		ToggleDropDownMenu(1, nil, self, self:GetName(), 74, 15)
 	end)
+
+	local arrow = filterButton:CreateTexture(nil, "ARTWORK")
+	arrow:SetPoint("RIGHT", -5, 0)
+	arrow:SetSize(10, 12)
+	arrow:SetTexture([[Interface\ChatFrame\ChatFrameExpandArrow]])
+	arrow:Show()
+	filterButton.Icon = arrow
+
+	filterButton:Hide()
+
+	local function menu(self, level)
+		local info = UIDropDownMenu_CreateInfo()
+		info.keepShownOnClick = true
+
+		-- filters?
+		-- - enabled, loadable, lod
+		-- - Addon meta flags
+		if level == 1 then
+			info.isNotRadio = true
+			info.text = "Enabled"
+			info.func = function(_, _, _, checked)
+				--setFilterEnabled(checked)
+				--AddonList_Update()
+			end
+			--info.checked = getFilterEnabled()
+			UIDropDownMenu_AddButton(info, level)
+
+			info.text = "Disabled"
+			info.func = function(_, _, _, checked)
+				--setFilterDisabled(checked)
+				--AddonList_Update()
+			end
+			--info.checked = getFilterDisabled()
+			UIDropDownMenu_AddButton(info, level)
+
+			--[[
+			info.checked = 	nil
+			info.isNotRadio = nil
+			info.func =  nil
+
+			info.text = "Categories"
+			info.value = 1
+			info.hasArrow = true
+			info.notCheckable = true
+			UIDropDownMenu_AddButton(info, level)
+		else
+			if UIDROPDOWNMENU_MENU_VALUE == 1 then
+				info.hasArrow = false
+				info.isNotRadio = true
+				info.notCheckable = true
+
+				info.text = CHECK_ALL
+				UIDropDownMenu_AddButton(info, level)
+
+				info.text = UNCHECK_ALL
+				UIDropDownMenu_AddButton(info, level)
+			end
+			--]]
+		end
+	end
+
+	local filterDropDown = CreateFrame("Frame", "BetterAddonListFilterDropDown", AddonList, "UIDropDownMenuTemplate")
+	filterDropDown.initialize = menu
+	filterDropDown.displayMode = "MENU"
+	--]==]
 end
 
 function addon:EnableProtected()
@@ -622,7 +806,7 @@ function addon:EnableSet(name)
 			end
 		end
 	end
-	AddonList_Update()
+	_G.AddonList_Update()
 end
 
 function addon:DisableSet(name)
@@ -635,7 +819,7 @@ function addon:DisableSet(name)
 			end
 		end
 	end
-	AddonList_Update()
+	_G.AddonList_Update()
 end
 
 
