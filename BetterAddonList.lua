@@ -556,9 +556,13 @@ do
 			else
 				local enabled = GetAddOnEnableState(character, index) > 0
 				if enabled then
-					if not checkDeps(GetAddOnDependencies(index)) then
+					local depsEnabled = checkDeps(GetAddOnDependencies(index))
+					if not depsEnabled then
 						title:SetTextColor(1.0, 0.1, 0.1)
 						status:SetText(_G["ADDON_DEP_DISABLED"])
+					end
+					if IsAddOnLoadOnDemand(index) and not IsAddOnLoaded(index) and depsEnabled then
+						AddonList_SetStatus(entry, true, false, false)
 					end
 
 					local memory = GetAddOnMemoryUsage(index)
