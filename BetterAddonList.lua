@@ -439,12 +439,12 @@ do
 		end
 	end
 
-	local dropdown = CreateFrame("Frame", "BetterAddonListSetsDropDown", nil, "UIDropDownMenuTemplate")
+	local dropdown = CreateFrame("Frame", "BetterAddonListSetsDropDown", AddonList, "UIDropDownMenuTemplate")
 	dropdown.initialize = menu
 	dropdown.displayMode = "MENU"
 
 	local button = CreateFrame("Button", "BetterAddonListSetsButton", AddonList, "UIPanelButtonTemplate")
-	button:SetPoint("LEFT", AddonCharacterDropDownButton, "RIGHT", 5, 0)
+	button:SetPoint("LEFT", AddonCharacterDropDownButton, "RIGHT", 3, 0)
 	button:SetSize(80, 22)
 	button:SetText(L["Sets"])
 	button:SetScript("OnClick", function(self)
@@ -511,12 +511,40 @@ do
 		end
 	end)
 
+	AddonTooltip_BuildDeps = function(...) -- replaced!
+		if select("#", ...) == 0 then
+			return ""
+		end
+
+		local deps = {...}
+		for i, dep in ipairs(deps) do
+			if GetAddOnEnableState(character, dep) == 0 then
+				deps[i] = ("|cffff2020%s|r"):format(dep)
+			end
+		end
+		return ADDON_DEPENDENCIES .. table.concat(deps, ", ")
+	end
+
+	local function checkDeps(...)
+		for i = 1, select("#", ...) do
+			local dep = select(i, ...)
+			if GetAddOnEnableState(character, dep) == 0 then
+				return false
+			end
+		end
+		return true
+	end
+
 	hooksecurefunc("AddonList_Update", function()
 		local numAddons = GetNumAddOns()
 		for i=1, MAX_ADDONS_DISPLAYED do
 			local index = AddonList.offset + i
+
 			local entry = _G["AddonListEntry"..i]
 			local checkbox = _G["AddonListEntry"..i.."Enabled"]
+			local title = _G["AddonListEntry"..i.."Title"]
+			local status = _G["AddonListEntry"..i.."Status"]
+
 			local lockIcon = lockIcons[i]
 			local memIcon = memIcons[i]
 
@@ -528,6 +556,11 @@ do
 			else
 				local enabled = GetAddOnEnableState(character, index) > 0
 				if enabled then
+					if not checkDeps(GetAddOnDependencies(index)) then
+						title:SetTextColor(1.0, 0.1, 0.1)
+						status:SetText(_G["ADDON_DEP_DISABLED"])
+					end
+
 					local memory = GetAddOnMemoryUsage(index)
 					entry.memory = memory
 					local usage = memory/8000 -- just needed some baseline!
