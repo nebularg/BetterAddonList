@@ -497,6 +497,11 @@ do
 		self.timer = nil
 	end)
 
+	hooksecurefunc("AddonList_LoadAddOn", function(self)
+		UpdateAddOnMemoryUsage()
+		AddonList_Update()
+	end)
+
 	hooksecurefunc("AddonTooltip_Update", function(self)
 		local memory = self.memory
 		if memory then
