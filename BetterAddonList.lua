@@ -375,6 +375,9 @@ do
 
 			info.text = L["Reset"]
 			info.func = function() addon:LoadSet(DEFAULT_SET) end
+			info.tooltipTitle = info.text
+			info.tooltipText = L["Reset addons to what was enabled at login."]
+			info.tooltipOnButton = 1
 			UIDropDownMenu_AddButton(info, level)
 
 		elseif level == 2 then
@@ -401,8 +404,13 @@ do
 				addon:LoadSet(CURRENT_SET)
 				CloseDropDownMenus(1)
 			end
+			info.tooltipTitle = info.text
+			info.tooltipText = L["Disable all addons then enable addons in this set."]
+			info.tooltipOnButton = 1
 			info.notCheckable = 1
 			UIDropDownMenu_AddButton(info, level)
+			info.tooltipTitle = nil
+			info.tooltipText = nil
 
 			info.text = L["Save"]
 			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_SAVESET", CURRENT_SET, nil, CURRENT_SET) end
