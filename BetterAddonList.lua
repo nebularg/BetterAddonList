@@ -1,10 +1,10 @@
 local ADDON_NAME = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
--- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2 UIDROPDOWNMENU_MENU_VALUE
+-- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2 UIDROPDOWNMENU_MENU_VALUE
 -- GLOBALS: AddonList AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonCharacterDropDown AddonListScrollFrame AddonTooltip_BuildDeps GetAddOnEnableState
 -- GLOBALS: StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_GetSelectedValue UIDropDownMenu_SetSelectedValue UIDropDownMenu_SetText
--- GLOBALS: ADDON_BUTTON_HEIGHT ADDON_DEPENDENCIES MAX_ADDONS_DISPLAYED SearchBoxTemplate_OnTextChanged GameTooltip C_Timer FauxScrollFrame_Update
+-- GLOBALS: ADDON_BUTTON_HEIGHT ADDON_DEPENDENCIES MAX_ADDONS_DISPLAYED SearchBoxTemplate_OnTextChanged GameTooltip C_Timer FauxScrollFrame_Update IsAddonVersionCheckEnabled
 
 local AddonList_Update = AddonList_Update
 
@@ -225,7 +225,7 @@ StaticPopupDialogs["BETTER_ADDONLIST_NEWSET"] = {
 		addon:NewSet(name)
 	end,
 	EditBoxOnEnterPressed = function(self)
-		local name = self:GetParent().editBox:GetText()
+		local name = self:GetParent().editBox:GetText():trim()
 		addon:NewSet(name)
 		self:GetParent():Hide()
 	end,
@@ -324,8 +324,11 @@ do
 	local function pad(s)
 		return ("%04d"):format(tonumber(s))
 	end
-	local function cmp(a, b)
+	local function natsort(a, b)
 		return a:gsub("(%d+)", pad):lower() < b:gsub("(%d+)", pad):lower()
+	end
+	local function icmp(a, b) -- ignore color
+		return a:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") < b:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") -- =~ s/(\|c[a-fA-F0-9]{8}|\|r)//g
 	end
 
 	local function menu(self, level)
@@ -342,7 +345,7 @@ do
 						list[#list+1] = name
 					end
 				end
-				sort(list, cmp)
+				sort(list, natsort)
 
 				info.hasArrow = 1
 				for _, name in ipairs(list) do
@@ -442,6 +445,7 @@ do
 				UIDropDownMenu_AddButton(info, level)
 				info.isTitle = nil
 
+				sort(sets[CURRENT_SET], icmp)
 				for i, name in ipairs(sets[CURRENT_SET]) do
 					if i > 30 then
 						info.text = L["... and %d more"]:format(#sets[CURRENT_SET] - i)
@@ -878,28 +882,21 @@ function addon:NewSet(name, overwrite) -- EmptySet
 	wipe(set)
 end
 
-do
-	local function cmp(a, b) -- ignore color
-		return a:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") < b:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") -- =~ s/(\|c[a-fA-F0-9]{8}|\|r)//g
+function addon:SaveSet(name)
+	if not name or name == "" then return end
+
+	local set = sets[name]
+	if not set then
+		sets[name] = {}
+		set = sets[name]
 	end
+	wipe(set)
 
-	function addon:SaveSet(name)
-		if not name or name == "" then return end
-
-		local set = sets[name]
-		if not set then
-			sets[name] = {}
-			set = sets[name]
+	for i=1, GetNumAddOns() do
+		local enabled = GetAddOnEnableState(character, i) > 0
+		if enabled and not IsAddonProtected(i) then
+			set[#set+1] = GetAddOnInfo(i)
 		end
-		wipe(set)
-
-		for i=1, GetNumAddOns() do
-			local enabled = GetAddOnEnableState(character, i) > 0
-			if enabled and not IsAddonProtected(i) then
-				set[#set+1] = GetAddOnInfo(i)
-			end
-		end
-		sort(set, cmp)
 	end
 end
 
