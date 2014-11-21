@@ -26,11 +26,11 @@ local function IsAddonProtected(index)
 	return name == ADDON_NAME or security == "SECURE" or BetterAddonListDB.protected[name]
 end
 
-local function SetAddonProtected(index, state)
+local function SetAddonProtected(index, value)
 	if not index then return end
 	local name, _, _, _, _, security = GetAddOnInfo(index)
 	if name ~= ADDON_NAME and security == "INSECURE" then
-		BetterAddonListDB.protected[name] = state and true or nil
+		BetterAddonListDB.protected[name] = value and true or nil
 	end
 end
 
@@ -110,14 +110,15 @@ function addon:PLAYER_LOGIN()
 	AddonList:ClearAllPoints()
 	AddonList:SetPoint("CENTER")
 
-	--UIPanelWindows["AddonList"].area = nil -- let the frame overlap over ui frames
+	-- let the frame overlap over ui frames
+	--UIPanelWindows["AddonList"].area = nil
 
 	-- default to showing the player profile
 	UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
-	UIDropDownMenu_SetText(AddonCharacterDropDown, character) -- don't show "Custom" ... this dropdown is weird.
+	UIDropDownMenu_SetText(AddonCharacterDropDown, character) -- don't show "Custom" ... this dropdown is weird
 
 	-- save a list of enabled addons so that you can reset to it
-	-- could use AddonList.startStatus, but this is easier.
+	-- could use AddonList.startStatus, but this is easier
 	self:SaveSet(DEFAULT_SET)
 
 	SLASH_BETTERADDONLIST1 = "/addons"
@@ -222,12 +223,20 @@ StaticPopupDialogs["BETTER_ADDONLIST_NEWSET"] = {
 	button2 = CANCEL,
 	OnAccept = function(self)
 		local name = self.editBox:GetText()
-		addon:NewSet(name)
+		if sets[name] then
+			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
+			return
+		end
+		addon:SaveSet(name)
 	end,
 	EditBoxOnEnterPressed = function(self)
 		local name = self:GetParent().editBox:GetText():trim()
-		addon:NewSet(name)
 		self:GetParent():Hide()
+		if sets[name] then
+			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
+			return
+		end
+		addon:SaveSet(name)
 	end,
 	EditBoxOnEscapePressed = function(self)
 		self:GetParent():Hide()
@@ -863,23 +872,6 @@ function addon:DisableSet(name)
 		end
 	end
 	_G.AddonList_Update()
-end
-
-
-function addon:NewSet(name, overwrite) -- EmptySet
-	if not name or name == "" then return end
-
-	if sets[name] and not overwrite then
-		StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
-		return
-	end
-
-	local set = sets[name]
-	if not set then
-		sets[name] = {}
-		set = sets[name]
-	end
-	wipe(set)
 end
 
 function addon:SaveSet(name)
