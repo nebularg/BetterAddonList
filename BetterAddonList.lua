@@ -64,6 +64,37 @@ function addon:ADDON_LOADED(name)
 	hooksecurefunc("DisableAllAddOns", function()
 		self:EnableProtected()
 	end)
+
+	-- check protected
+	local messages = {}
+	for name in next, BetterAddonListDB.protected do
+		local _, _, _, loadable, reason = GetAddOnInfo(name)
+		if not loadable then
+			if reason == "MISSING" then
+				BetterAddonListDB.protected[name] = nil
+			else
+				messages[name] = reason or "UNKNOWN_ERROR"
+			end
+		end
+		EnableAddOn(name, true)
+	end
+	if next(messages) then
+		C_Timer.After(12, function()
+			local ood = nil
+			for name, reason in next, messages do
+				self:Print(L["Protected addon %q not enabled! (%s)"]:format(name, _G["ADDON_"..reason]))
+				if reason == "INTERFACE_VERSION" then
+					ood = true
+				end
+			end
+			if ood and IsAddonVersionCheckEnabled() then
+				self:Print(L["Out of date addons are being disabled! They will not be able to load until their interface version is updated or \"Load out of date AddOns\" is checked."])
+			else
+				self:Print(L["Reload UI to load these addons."])
+			end
+			messages = nil
+		end)
+	end
 end
 
 function addon:PLAYER_LOGIN()
@@ -91,6 +122,7 @@ function addon:PLAYER_LOGIN()
 
 	SLASH_BETTERADDONLIST1 = "/addons"
 	SLASH_BETTERADDONLIST2 = "/acp" -- muscle memory ;[
+	SLASH_BETTERADDONLIST3 = "/bal" -- why not
 	SlashCmdList["BETTERADDONLIST"] = function(input)
 		if not input or input:trim() == "" then
 			ShowUIPanel(AddonList)
@@ -108,10 +140,17 @@ function addon:PLAYER_LOGIN()
 			else
 				self:Print(L["No set named %q."]:format(rest))
 			end
-		elseif command == "unload" then
+		elseif command == "unload" or command == "disable" then
 			if sets[rest] then
 				self:DisableSet(rest)
 				self:Print(L["Disabled addons in set %q."]:format(rest))
+			else
+				self:Print(L["No set named %q."]:format(rest))
+			end
+		elseif command == "enable" then
+			if sets[rest] then
+				self:EnableSet(rest)
+				self:Print(L["Enabled addons in set %q."]:format(rest))
 			else
 				self:Print(L["No set named %q."]:format(rest))
 			end
@@ -787,7 +826,7 @@ end
 function addon:EnableProtected()
 	EnableAddOn(ADDON_NAME, true)
 	for name in next, BetterAddonListDB.protected do
-		EnableAddOn(name, character)
+		EnableAddOn(name, true)
 	end
 end
 
