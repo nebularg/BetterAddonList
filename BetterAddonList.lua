@@ -16,7 +16,7 @@ local L = setmetatable({}, {
 })
 
 local sets = nil
-local nested = nil
+local included = nil
 local character = nil
 local DEFAULT_SET = "__default__"
 
@@ -53,7 +53,7 @@ function addon:ADDON_LOADED(name)
 	if not BetterAddonListDB.nested then
 		BetterAddonListDB.nested = {}
 	end
-	nested = BetterAddonListDB.nested
+	included = BetterAddonListDB.nested
 
 	if not BetterAddonListDB.protected then
 		BetterAddonListDB.protected = {}
@@ -176,11 +176,9 @@ end
 function addon:PLAYER_LOGOUT()
 	-- clean up
 	sets[DEFAULT_SET] = nil
-	if nested then
-		for k,v in next, nested do
-			if not next(v) then
-				nested[k] = nil
-			end
+	for k, v in next, included do
+		if not next(v) then
+			included[k] = nil
 		end
 	end
 end
@@ -424,7 +422,6 @@ do
 			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_DELETESET", CURRENT_SET, nil, CURRENT_SET) end
 			UIDropDownMenu_AddButton(info, level)
 
-			--[[
 			UIDropDownMenu_AddButton(separator, level)
 
 			info.text = L["Include with another set"]
@@ -438,9 +435,8 @@ do
 			info.value = "remove_set"
 			info.func = nil
 			info.hasArrow = 1
-			info.disabled = (not nested[CURRENT_SET] or not next(nested[CURRENT_SET])) and 1 or nil
+			info.disabled = not included[CURRENT_SET] or not next(included[CURRENT_SET])
 			UIDropDownMenu_AddButton(info, level)
-			--]]
 
 			UIDropDownMenu_AddButton(separator, level)
 
@@ -472,18 +468,26 @@ do
 					info.text = name
 					UIDropDownMenu_AddButton(info, level)
 				end
-			--[[
 			elseif UIDROPDOWNMENU_MENU_VALUE == "include_set" then
 				info.text = L["Include with another set"]
 				info.isTitle = 1
 				UIDropDownMenu_AddButton(info, level)
 				info.isTitle = nil
+				info.disabled = nil
+				info.notCheckable = nil
+				info.isNotRadio = 1
+				info.keepShownOnClick = 1
 
 				for i, name in ipairs(list) do
 					if name ~= CURRENT_SET and name ~= DEFAULT_SET then
 						info.text = name
-						info.func = function() StaticPopup_Show("BETTER_ADDONLIST_INCLUDESET", CURRENT_SET, nil, {CURRENT_SET, name}) end
-						info.disabled = (nested[CURRENT_SET] and nested[CURRENT_SET][name]) and 1 or nil
+						info.checked = included[name] and included[name][CURRENT_SET] and 1 or nil
+						info.func = function(_, _, _, checked)
+							if not included[name] then
+								included[name] = {}
+							end
+							included[name][CURRENT_SET] = checked or nil
+						end
 						UIDropDownMenu_AddButton(info, level)
 					end
 				end
@@ -492,19 +496,24 @@ do
 				info.isTitle = 1
 				UIDropDownMenu_AddButton(info, level)
 				info.isTitle = nil
+				info.disabled = nil
+				info.notCheckable = 1
+				info.isNotRadio = 1
 
-				if nested[CURRENT_SET] then
-					for name in next, nested[CURRENT_SET] do
+				if included[CURRENT_SET] and next(included[CURRENT_SET]) then
+					for name in next, included[CURRENT_SET] do
 						info.text = name
-						info.func = function() StaticPopup_Show("BETTER_ADDONLIST_REMOVESET", CURRENT_SET, nil, {CURRENT_SET, name}) end
+						info.func = function() included[CURRENT_SET][name] = nil end
 						UIDropDownMenu_AddButton(info, level)
 					end
+				else
+					info.text = NONE
+					info.disabled = 1
+					UIDropDownMenu_AddButton(info, level)
 				end
-			--]]
 			end
 		end
 	end
-
 	local dropdown = CreateFrame("Frame", "BetterAddonListSetsDropDown", AddonList, "UIDropDownMenuTemplate")
 	dropdown.initialize = menu
 	dropdown.displayMode = "MENU"
@@ -856,13 +865,22 @@ function addon:LoadSet(name)
 	self:EnableSet(name)
 end
 
-function addon:EnableSet(name)
+function addon:EnableSet(name, done)
 	local set = sets[name]
 	if set and #set > 0 then
 		for i=1, GetNumAddOns() do
 			local name = GetAddOnInfo(i)
 			if tContains(set, name) then
 				EnableAddOn(name, character)
+			end
+		end
+	end
+	if included[name] then
+		done = done or { [name] = true }
+		for set in next, included[name] do
+			if not done[set] then
+				done[set] = true
+				self:EnableSet(set, done)
 			end
 		end
 	end
