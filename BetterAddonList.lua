@@ -1,14 +1,14 @@
-local ADDON_NAME = ...
+local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
--- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2 UIDROPDOWNMENU_MENU_VALUE
+-- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2 UIDROPDOWNMENU_MENU_VALUE NONE
 -- GLOBALS: AddonList AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonCharacterDropDown AddonListScrollFrame AddonTooltip_BuildDeps GetAddOnEnableState
 -- GLOBALS: StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_GetSelectedValue UIDropDownMenu_SetSelectedValue UIDropDownMenu_SetText
 -- GLOBALS: ADDON_BUTTON_HEIGHT ADDON_DEPENDENCIES MAX_ADDONS_DISPLAYED SearchBoxTemplate_OnTextChanged GameTooltip C_Timer FauxScrollFrame_Update IsAddonVersionCheckEnabled
 
 local AddonList_Update = AddonList_Update
 
-local L = setmetatable({}, {
+local L = setmetatable(ns.L or {}, {
 	__index = function(t, k)
 		t[k] = k
 		return k
@@ -99,7 +99,7 @@ end
 
 function addon:PLAYER_LOGIN()
 	-- make the panel movable
-	local mover = CreateFrame("Frame", "AddonListMover", AddonList)
+	local mover = CreateFrame("Frame", "BetterAddonListMover", AddonList)
 	mover:EnableMouse(true)
 	mover:SetPoint("TOP", AddonList, "TOP", 0, 0)
 	mover:SetWidth(500)
@@ -583,9 +583,9 @@ do
 			local text = ""
 			if memory > 1000 then
 				memory = memory / 1000
-				text = ("Memory: %.02f MB"):format(memory)
+				text = L["Memory: %.02f MB"]:format(memory)
 			else
-				text = ("Memory: %.0f KB"):format(memory)
+				text = L["Memory: %.0f KB"]:format(memory)
 			end
 			GameTooltip:AddLine(text)
 		end
