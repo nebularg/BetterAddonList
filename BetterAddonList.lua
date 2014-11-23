@@ -34,6 +34,16 @@ local function SetAddonProtected(index, value)
 	end
 end
 
+local function CheckAddonDependencies(...)
+	for i = 1, select("#", ...) do
+		local dep = select(i, ...)
+		if GetAddOnEnableState(character, dep) == 0 then
+			return false
+		end
+	end
+	return true
+end
+
 
 local addon = CreateFrame("Frame")
 addon:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
@@ -69,6 +79,13 @@ function addon:ADDON_LOADED(name)
 	local messages = {}
 	for name in next, BetterAddonListDB.protected do
 		local _, _, _, loadable, reason = GetAddOnInfo(name)
+		if IsAddOnLoadOnDemand(name) then
+			if not CheckAddonDependencies(GetAddOnDependencies(name)) then
+				loadable, reason = false, "DEP_DISABLED"
+			elseif not loadable and reason == "DEMAND_LOADED" then
+				loadable = true
+			end
+		end
 		if not loadable then
 			if reason == "MISSING" then
 				BetterAddonListDB.protected[name] = nil
@@ -80,16 +97,18 @@ function addon:ADDON_LOADED(name)
 	end
 	if next(messages) then
 		C_Timer.After(12, function()
-			local ood = nil
+			local ood, dep = nil, nil
 			for name, reason in next, messages do
-				self:Print(L["Protected addon %q not enabled! (%s)"]:format(name, _G["ADDON_"..reason]))
+				self:Print(L["Problem with protected addon %q (%s)"]:format(name, _G["ADDON_"..reason]))
 				if reason == "INTERFACE_VERSION" then
 					ood = true
+				elseif reason:find("DEP", nil, true) then
+					dep = true
 				end
 			end
 			if ood and IsAddonVersionCheckEnabled() then
 				self:Print(L["Out of date addons are being disabled! They will not be able to load until their interface version is updated or \"Load out of date AddOns\" is checked."])
-			else
+			elseif not dep then
 				self:Print(L["Reload UI to load these addons."])
 			end
 			messages = nil
@@ -605,16 +624,6 @@ do
 		return ADDON_DEPENDENCIES .. table.concat(deps, ", ")
 	end
 
-	local function checkDeps(...)
-		for i = 1, select("#", ...) do
-			local dep = select(i, ...)
-			if GetAddOnEnableState(character, dep) == 0 then
-				return false
-			end
-		end
-		return true
-	end
-
 	-- Update the panel my way
 	AddonList_Update = function()
 		if AddonList.searchList then
@@ -694,7 +703,7 @@ do
 			else
 				local enabled = GetAddOnEnableState(character, addonIndex) > 0
 				if enabled then
-					local depsEnabled = checkDeps(GetAddOnDependencies(addonIndex))
+					local depsEnabled = CheckAddonDependencies(GetAddOnDependencies(addonIndex))
 					if not depsEnabled then
 						title:SetTextColor(1.0, 0.1, 0.1)
 						status:SetText(_G["ADDON_DEP_DISABLED"])
