@@ -1,10 +1,12 @@
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
--- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2 UIDROPDOWNMENU_MENU_VALUE NONE
--- GLOBALS: AddonList AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonCharacterDropDown AddonListScrollFrame AddonTooltip_BuildDeps GetAddOnEnableState
--- GLOBALS: StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_GetSelectedValue UIDropDownMenu_SetSelectedValue UIDropDownMenu_SetText
--- GLOBALS: ADDON_BUTTON_HEIGHT ADDON_DEPENDENCIES MAX_ADDONS_DISPLAYED SearchBoxTemplate_OnTextChanged GameTooltip C_Timer FauxScrollFrame_Update IsAddonVersionCheckEnabled
+-- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
+-- GLOBALS: UIDROPDOWNMENU_MENU_VALUE NONE ADDON_BUTTON_HEIGHT ADDON_DEPENDENCIES MAX_ADDONS_DISPLAYED YES CANCEL OKAY BetterAddonListSetsButton
+-- GLOBALS: StaticPopupDialogs StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDropDownMenu_SetText
+-- GLOBALS: SearchBoxTemplate_OnTextChanged GameTooltip C_Timer FauxScrollFrame_Update IsAddonVersionCheckEnabled GetAddOnEnableState
+-- GLOBALS: AddonList AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonCharacterDropDown AddonListScrollFrame AddonTooltip_BuildDeps
+-- GLOBALS: AddonList_Update AddonCharacterDropDownButton AddonListForceLoad
 
 local AddonList_Update = AddonList_Update
 
