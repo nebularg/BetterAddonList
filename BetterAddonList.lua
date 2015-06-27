@@ -71,7 +71,7 @@ function addon:ADDON_LOADED(name)
 
 	character = UnitName("player")
 
-	hooksecurefunc("DisableAllAddOns", function()
+	hooksecurefunc("DisableAllAddOns", function(character)
 		self:EnableProtected()
 	end)
 
@@ -175,7 +175,7 @@ function addon:PLAYER_LOGIN()
 				self:Print(L["No set named %q."]:format(rest))
 			end
 		elseif command == "disableall" then
-			DisableAllAddOns()
+			DisableAllAddOns(character)
 			_G.AddonList_Update()
 			self:Print(L["Disabled all addons."])
 		elseif command == "reset" then
@@ -870,7 +870,7 @@ function addon:EnableProtected()
 end
 
 function addon:LoadSet(name)
-	DisableAllAddOns()
+	DisableAllAddOns(character)
 	self:EnableSet(name)
 end
 
