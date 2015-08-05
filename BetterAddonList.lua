@@ -131,12 +131,21 @@ function addon:PLAYER_LOGIN()
 	AddonList:ClearAllPoints()
 	AddonList:SetPoint("CENTER")
 
+	-- move and resize the "Load out of date addons" check box
+	AddonListForceLoad:ClearAllPoints()
+	AddonListForceLoad:SetPoint("TOPLEFT", AddonList, 2, 1)
+	AddonListForceLoad:SetSize(24, 24)
+	local regions = {AddonListForceLoad:GetRegions()}
+	regions[1]:SetPoint("LEFT", AddonListForceLoad, "RIGHT", 2, 0)
+	regions[1]:SetText(L["Load out of date"])
+	regions = nil
+
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
 
 	-- default to showing the player profile
 	UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
-	UIDropDownMenu_SetText(AddonCharacterDropDown, character) -- don't show "Custom" ... this dropdown is weird
+	--UIDropDownMenu_SetText(AddonCharacterDropDown, character) -- don't show "Custom" ... this dropdown is weird (and doesn't look like i need to do this as of 6.2)
 
 	-- save a list of enabled addons so that you can reset to it
 	-- could use AddonList.startStatus, but this is easier
@@ -745,16 +754,36 @@ do
 	hooksecurefunc("AddonList_Update", AddonList_Update)
 end
 
--- search
+-- search / filter
 do
-	-- bleh, less code than creating my own check button
-	AddonListForceLoad:ClearAllPoints()
-	AddonListForceLoad:SetPoint("LEFT", BetterAddonListSetsButton, "RIGHT", 2, 0)
-	local regions = {AddonListForceLoad:GetRegions()}
-	if regions[1]:GetWidth() > 88 then -- don't truncate if we don't have to to >.<
-		regions[1]:SetText(L["Load out of date"])
+	L.FILTER_ENABLED = "Enabled"
+	L.FILTER_DISABLED = "Disabled"
+	L.FILTER_LOD = "Load On Demand"
+	L.FILTER_PROTECTED = "Protected"
+
+	local filters = { -- for menu order
+		"ENABLED",
+		"DISABLED",
+		"LOD",
+		"PROTECTED",
+	}
+	local filterFunc = {
+		ENABLED = function(index) return GetAddOnEnableState(character, index) > 0 end,
+		DISABLED = function(index) return GetAddOnEnableState(character, index) == 0 end,
+		LOD = function(index) return IsAddOnLoadOnDemand(index) end,
+		PROTECTED = function(index) return IsAddonProtected(index) end,
+	}
+	local function checkFilters(active, index)
+		for filter in next, active do
+			if not filterFunc[filter](index) then
+				return false
+			end
+		end
+		return true
 	end
-	regions = nil
+
+	AddonList.filterList = {}
+	local filterList = AddonList.filterList
 
 	local strfind = string.find
 	local searchList = {}
@@ -762,17 +791,16 @@ do
 	local function OnTextChanged(self)
 		SearchBoxTemplate_OnTextChanged(self)
 		local oldText = searchString
-		searchString = self:GetText():lower()
+		searchString = self:GetText():lower():trim()
 
-		if searchString == "" then
+		if searchString == "" and not next(filterList) then
 			AddonList.searchList = nil
 			_G.AddonList_Update()
-		elseif oldText ~= searchString then
+		elseif oldText ~= searchString or next(filterList) then
 			wipe(searchList)
 			for i=1, GetNumAddOns() do
 				local name, title, notes = GetAddOnInfo(i)
-				local enabled = GetAddOnEnableState(character, i) > 0
-				if strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)) then
+				if (searchString == "" or (strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)))) and checkFilters(filterList, i) then
 					searchList[#searchList+1] = i
 				end
 			end
@@ -782,21 +810,16 @@ do
 	end
 
 	local editBox = CreateFrame("EditBox", "BetterAddonListSearchBox", AddonList, "SearchBoxTemplate")
-	editBox:SetPoint("TOPRIGHT", -11, -33) -- -107 w/filter
-	--editBox:SetPoint("TOPLEFT", AddonList, "TOPRIGHT", -126, -33) -- -222 w/filter
+	editBox:SetPoint("TOPRIGHT", -107, -33) -- -107 w/filter, -11 w/o
+	--editBox:SetPoint("TOPLEFT", AddonList, "TOPRIGHT", -126, -33) -- -222 w/filter, -126 w/o
 	editBox:SetSize(115, 20)
 	editBox:SetMaxLetters(40)
 	editBox:SetScript("OnTextChanged", OnTextChanged)
 
-	--[==[
 	local filterButton = CreateFrame("Button", "BetterAddonListFilterButton", AddonList, "UIMenuButtonStretchTemplate")
 	filterButton:SetPoint("LEFT", editBox, "RIGHT", 3, 0)
 	filterButton:SetSize(93, 22)
 	filterButton:SetText(FILTER)
-	filterButton:SetScript("OnClick", function(self)
-		PlaySound("igMainMenuOptionCheckBoxOn")
-		ToggleDropDownMenu(1, nil, self, self:GetName(), 74, 15)
-	end)
 
 	local arrow = filterButton:CreateTexture(nil, "ARTWORK")
 	arrow:SetPoint("RIGHT", -5, 0)
@@ -805,34 +828,24 @@ do
 	arrow:Show()
 	filterButton.Icon = arrow
 
-	filterButton:Hide()
-
 	local function menu(self, level)
 		local info = UIDropDownMenu_CreateInfo()
 		info.keepShownOnClick = true
 
-		-- filters?
-		-- - enabled, loadable, lod
-		-- - Addon meta flags
 		if level == 1 then
 			info.isNotRadio = true
-			info.text = "Enabled"
-			info.func = function(_, _, _, checked)
-				--setFilterEnabled(checked)
-				--AddonList_Update()
+			for _, key in ipairs(filters) do
+				info.text = L[("FILTER_%s"):format(key)]
+				info.func = function(_, _, _, checked)
+					filterList[key] = checked or nil
+					OnTextChanged(editBox)
+				end
+				info.checked = filterList[key]
+				UIDropDownMenu_AddButton(info, level)
 			end
-			--info.checked = getFilterEnabled()
-			UIDropDownMenu_AddButton(info, level)
-
-			info.text = "Disabled"
-			info.func = function(_, _, _, checked)
-				--setFilterDisabled(checked)
-				--AddonList_Update()
-			end
-			--info.checked = getFilterDisabled()
-			UIDropDownMenu_AddButton(info, level)
-
-			--[[
+		end
+		--[[
+			-- - Addon meta flags
 			info.checked = 	nil
 			info.isNotRadio = nil
 			info.func =  nil
@@ -854,14 +867,18 @@ do
 				info.text = UNCHECK_ALL
 				UIDropDownMenu_AddButton(info, level)
 			end
-			--]]
 		end
+		--]]
 	end
 
-	local filterDropDown = CreateFrame("Frame", "BetterAddonListFilterDropDown", AddonList, "UIDropDownMenuTemplate")
-	filterDropDown.initialize = menu
-	filterDropDown.displayMode = "MENU"
-	--]==]
+	local dropdown = CreateFrame("Frame", "BetterAddonListFilterDropDown", AddonList, "UIDropDownMenuTemplate")
+	dropdown.initialize = menu
+	dropdown.displayMode = "MENU"
+
+	filterButton:SetScript("OnClick", function(self)
+		PlaySound("igMainMenuOptionCheckBoxOn")
+		ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 74, 15)
+	end)
 end
 
 function addon:EnableProtected()
