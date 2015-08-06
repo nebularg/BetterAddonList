@@ -2,13 +2,24 @@ local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
 -- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
--- GLOBALS: UIDROPDOWNMENU_MENU_VALUE NONE ADDON_BUTTON_HEIGHT ADDON_DEPENDENCIES MAX_ADDONS_DISPLAYED YES CANCEL OKAY BetterAddonListSetsButton
--- GLOBALS: StaticPopupDialogs StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDropDownMenu_SetText
--- GLOBALS: SearchBoxTemplate_OnTextChanged GameTooltip C_Timer FauxScrollFrame_Update IsAddonVersionCheckEnabled GetAddOnEnableState
--- GLOBALS: AddonList AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonCharacterDropDown AddonListScrollFrame AddonTooltip_BuildDeps
--- GLOBALS: AddonList_Update AddonCharacterDropDownButton AddonListForceLoad
+-- GLOBALS: UIDROPDOWNMENU_MENU_VALUE NONE ADDON_DEPENDENCIES YES CANCEL OKAY GameTooltip CreateFrame UnitName ReloadUI hooksecurefunc
+-- GLOBALS: AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListScrollFrame AddonTooltip_BuildDeps
+-- GLOBALS: AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus
+-- GLOBALS: StaticPopupDialogs StaticPopup_Show SearchBoxTemplate_OnTextChanged
+-- GETGLOBALFILE OFF
+
+local _G = _G
+local select, next, ipairs, wipe, sort, tconcat, tostringall, tonumber, unpack = select, next, ipairs, wipe, sort, table.concat, tostringall, tonumber, unpack
+local UIDropDownMenu_CreateInfo, UIDropDownMenu_AddButton, UIDropDownMenu_SetSelectedValue = UIDropDownMenu_CreateInfo, UIDropDownMenu_AddButton, UIDropDownMenu_SetSelectedValue
+local GetAddOnInfo, GetAddOnEnableState, GetAddOnDependencies, GetAddOnMemoryUsage, GetNumAddOns = GetAddOnInfo, GetAddOnEnableState, GetAddOnDependencies, GetAddOnMemoryUsage, GetNumAddOns
+local IsAddOnLoaded, IsAddOnLoadOnDemand, IsAddonVersionCheckEnabled = IsAddOnLoaded, IsAddOnLoadOnDemand, IsAddonVersionCheckEnabled
+local EnableAddOn, DisableAddOn, DisableAllAddOns, UpdateAddOnMemoryUsage = EnableAddOn, DisableAddOn, DisableAllAddOns, UpdateAddOnMemoryUsage
+local tContains, CopyTable, PlaySound, IsShiftKeyDown, After, NewTicker = tContains, CopyTable, PlaySound, IsShiftKeyDown, C_Timer.After, C_Timer.NewTicker
+local ShowUIPanel, ToggleDropDownMenu, CloseDropDownMenus, FauxScrollFrame_Update = ShowUIPanel, ToggleDropDownMenu, CloseDropDownMenus, FauxScrollFrame_Update
 
 local AddonList_Update = AddonList_Update
+local ADDON_BUTTON_HEIGHT = ADDON_BUTTON_HEIGHT
+local MAX_ADDONS_DISPLAYED = MAX_ADDONS_DISPLAYED
 
 local L = setmetatable(ns.L or {}, {
 	__index = function(t, k)
@@ -98,7 +109,7 @@ function addon:ADDON_LOADED(name)
 		EnableAddOn(name, true)
 	end
 	if next(messages) then
-		C_Timer.After(12, function()
+		After(12, function()
 			local ood, dep = nil, nil
 			for name, reason in next, messages do
 				self:Print(L["Problem with protected addon %q (%s)"]:format(name, _G["ADDON_"..reason]))
@@ -594,7 +605,7 @@ do
 	updater:SetScript("OnShow", function(self)
 		UpdateAddOnMemoryUsage()
 		if not self.timer then
-			self.timer = C_Timer.NewTicker(10, UpdateAddOnMemoryUsage)
+			self.timer = NewTicker(10, UpdateAddOnMemoryUsage)
 		end
 	end)
 	updater:SetScript("OnHide", function(self)
@@ -632,7 +643,7 @@ do
 				deps[i] = ("|cffff2020%s|r"):format(dep)
 			end
 		end
-		return ADDON_DEPENDENCIES .. table.concat(deps, ", ")
+		return ADDON_DEPENDENCIES .. tconcat(deps, ", ")
 	end
 
 	-- Update the panel my way
