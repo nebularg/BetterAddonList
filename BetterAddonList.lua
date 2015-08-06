@@ -106,7 +106,7 @@ function addon:ADDON_LOADED(name)
 				messages[name] = reason or "UNKNOWN_ERROR"
 			end
 		end
-		EnableAddOn(name, true)
+		EnableAddOn(name)
 	end
 	if next(messages) then
 		After(12, function()
@@ -893,9 +893,9 @@ do
 end
 
 function addon:EnableProtected()
-	EnableAddOn(ADDON_NAME, true)
+	EnableAddOn(ADDON_NAME)
 	for name in next, BetterAddonListDB.protected do
-		EnableAddOn(name, true)
+		EnableAddOn(name)
 	end
 end
 
