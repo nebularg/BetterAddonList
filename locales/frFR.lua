@@ -2,7 +2,6 @@
 if GetLocale() ~= "frFR" then return end
 
 local _, ns = ...
-local L = {}
-ns.L = L
+local L = ns.L
 
 --@localization(locale="frFR", format="lua_additive_table", handle-unlocalized="ignore")@

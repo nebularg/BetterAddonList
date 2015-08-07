@@ -2,31 +2,20 @@ local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
 -- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
--- GLOBALS: UIDROPDOWNMENU_MENU_VALUE NONE ADDON_DEPENDENCIES YES CANCEL OKAY GameTooltip CreateFrame UnitName ReloadUI hooksecurefunc
--- GLOBALS: AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListScrollFrame AddonTooltip_BuildDeps
--- GLOBALS: AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus
--- GLOBALS: StaticPopupDialogs StaticPopup_Show SearchBoxTemplate_OnTextChanged
+-- GLOBALS: StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
+-- GLOBALS: FauxScrollFrame_Update SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns AddonTooltip_BuildDeps
+-- GLOBALS: AddonList AddonCharacterDropDown AddonListForceLoad AddonListScrollFrame AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus
 -- GETGLOBALFILE OFF
 
 local _G = _G
-local select, next, ipairs, wipe, sort, tconcat, tostringall, tonumber, unpack = select, next, ipairs, wipe, sort, table.concat, tostringall, tonumber, unpack
-local UIDropDownMenu_CreateInfo, UIDropDownMenu_AddButton, UIDropDownMenu_SetSelectedValue = UIDropDownMenu_CreateInfo, UIDropDownMenu_AddButton, UIDropDownMenu_SetSelectedValue
-local GetAddOnInfo, GetAddOnEnableState, GetAddOnDependencies, GetAddOnMemoryUsage, GetNumAddOns = GetAddOnInfo, GetAddOnEnableState, GetAddOnDependencies, GetAddOnMemoryUsage, GetNumAddOns
-local IsAddOnLoaded, IsAddOnLoadOnDemand, IsAddonVersionCheckEnabled = IsAddOnLoaded, IsAddOnLoadOnDemand, IsAddonVersionCheckEnabled
-local EnableAddOn, DisableAddOn, DisableAllAddOns, UpdateAddOnMemoryUsage = EnableAddOn, DisableAddOn, DisableAllAddOns, UpdateAddOnMemoryUsage
-local tContains, CopyTable, PlaySound, IsShiftKeyDown, After, NewTicker = tContains, CopyTable, PlaySound, IsShiftKeyDown, C_Timer.After, C_Timer.NewTicker
-local ShowUIPanel, ToggleDropDownMenu, CloseDropDownMenus, FauxScrollFrame_Update = ShowUIPanel, ToggleDropDownMenu, CloseDropDownMenus, FauxScrollFrame_Update
+local tconcat, After, NewTicker = table.concat, C_Timer.After, C_Timer.NewTicker
 
 local AddonList_Update = AddonList_Update
 local ADDON_BUTTON_HEIGHT = ADDON_BUTTON_HEIGHT
 local MAX_ADDONS_DISPLAYED = MAX_ADDONS_DISPLAYED
+local ADDON_DEPENDENCIES = ADDON_DEPENDENCIES
 
-local L = setmetatable(ns.L or {}, {
-	__index = function(t, k)
-		t[k] = k
-		return k
-	end,
-})
+local L = ns.L
 
 local sets = nil
 local included = nil
@@ -767,11 +756,6 @@ end
 
 -- search / filter
 do
-	L.FILTER_ENABLED = "Enabled"
-	L.FILTER_DISABLED = "Disabled"
-	L.FILTER_LOD = "Load On Demand"
-	L.FILTER_PROTECTED = "Protected"
-
 	local filters = { -- for menu order
 		"ENABLED",
 		"DISABLED",
