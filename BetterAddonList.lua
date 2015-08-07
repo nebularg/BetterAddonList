@@ -20,7 +20,6 @@ local L = ns.L
 local sets = nil
 local included = nil
 local character = nil
-local DEFAULT_SET = "__default__"
 
 local function IsAddonProtected(index)
 	if not index then return end
@@ -73,7 +72,7 @@ function addon:ADDON_LOADED(name)
 
 	character = UnitName("player")
 
-	hooksecurefunc("DisableAllAddOns", function(character)
+	hooksecurefunc("DisableAllAddOns", function()
 		self:EnableProtected()
 	end)
 
@@ -145,11 +144,6 @@ function addon:PLAYER_LOGIN()
 
 	-- default to showing the player profile
 	UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
-	--UIDropDownMenu_SetText(AddonCharacterDropDown, character) -- don't show "Custom" ... this dropdown is weird (and doesn't look like i need to do this as of 6.2)
-
-	-- save a list of enabled addons so that you can reset to it
-	-- could use AddonList.startStatus, but this is easier
-	self:SaveSet(DEFAULT_SET)
 
 	SLASH_BETTERADDONLIST1 = "/addons"
 	SLASH_BETTERADDONLIST2 = "/acp" -- muscle memory ;[
@@ -190,7 +184,8 @@ function addon:PLAYER_LOGIN()
 			_G.AddonList_Update()
 			self:Print(L["Disabled all addons."])
 		elseif command == "reset" then
-			self:LoadSet(DEFAULT_SET)
+			ResetAddOns()
+			_G.AddonList_Update()
 			self:Print(L["Reset addons to what was enabled at login."])
 		end
 	end
@@ -205,7 +200,6 @@ end
 
 function addon:PLAYER_LOGOUT()
 	-- clean up
-	sets[DEFAULT_SET] = nil
 	for k, v in next, included do
 		if not next(v) then
 			included[k] = nil
@@ -378,9 +372,7 @@ do
 			if next(sets) then
 				wipe(list)
 				for name in next, sets do
-					if name ~= DEFAULT_SET then
-						list[#list+1] = name
-					end
+					list[#list+1] = name
 				end
 				sort(list, natsort)
 
@@ -402,7 +394,10 @@ do
 			UIDropDownMenu_AddButton(info, level)
 
 			info.text = L["Reset"]
-			info.func = function() addon:LoadSet(DEFAULT_SET) end
+			info.func = function()
+				ResetAddOns()
+				_G.AddonList_Update()
+			end
 			info.tooltipTitle = info.text
 			info.tooltipText = L["Reset addons to what was enabled at login."]
 			info.tooltipOnButton = 1
@@ -509,7 +504,7 @@ do
 				info.keepShownOnClick = 1
 
 				for i, name in ipairs(list) do
-					if name ~= CURRENT_SET and name ~= DEFAULT_SET then
+					if name ~= CURRENT_SET then
 						info.text = name
 						info.checked = included[name] and included[name][CURRENT_SET] and 1 or nil
 						info.func = function(_, _, _, checked)
@@ -806,7 +801,6 @@ do
 
 	local editBox = CreateFrame("EditBox", "BetterAddonListSearchBox", AddonList, "SearchBoxTemplate")
 	editBox:SetPoint("TOPRIGHT", -107, -33) -- -107 w/filter, -11 w/o
-	--editBox:SetPoint("TOPLEFT", AddonList, "TOPRIGHT", -126, -33) -- -222 w/filter, -126 w/o
 	editBox:SetSize(115, 20)
 	editBox:SetMaxLetters(40)
 	editBox:SetScript("OnTextChanged", OnTextChanged)
