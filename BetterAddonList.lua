@@ -192,13 +192,6 @@ function addon:PLAYER_LOGIN()
 			self:Print(L["Reset addons to what was enabled at login."])
 		end
 	end
-
-	-- add some reload slashes, too
-	SLASH_RELOADUI1 = "/reloadui"
-	SLASH_RELOADUI2 = "/rl"
-	SlashCmdList["RELOADUI"] = function()
-		ReloadUI()
-	end
 end
 
 function addon:PLAYER_LOGOUT()
@@ -954,4 +947,3 @@ function addon:DeleteSet(name)
 
 	sets[name] = nil
 end
-
