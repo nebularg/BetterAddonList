@@ -154,6 +154,9 @@ function addon:PLAYER_LOGIN()
 			return
 		end
 
+		input = SecureCmdOptionParse(input)
+		if not input then return end
+
 		local command, rest = input:match("^(%S*)%s*(.-)$")
 		command = command and command:lower()
 		rest = (rest and rest ~= "") and rest:trim() or nil
