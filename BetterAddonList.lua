@@ -884,7 +884,7 @@ function addon:EnableSet(name, done)
 		for i=1, GetNumAddOns() do
 			local name = GetAddOnInfo(i)
 			if tContains(set, name) then
-				EnableAddOn(name, character)
+				EnableAddOn(i, character)
 			end
 		end
 	end
@@ -905,8 +905,8 @@ function addon:DisableSet(name)
 	if set and #set > 0 then
 		for i=1, GetNumAddOns() do
 			local name = GetAddOnInfo(i)
-			if not IsAddonProtected(name) and tContains(set, name) then
-				DisableAddOn(name, character)
+			if not IsAddonProtected(i) and tContains(set, name) then
+				DisableAddOn(i, character)
 			end
 		end
 	end
