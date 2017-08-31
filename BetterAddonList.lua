@@ -24,14 +24,14 @@ local character = nil
 local function IsAddonProtected(index)
 	if not index then return end
 	local name, _, _, _, _, security = GetAddOnInfo(index)
-	return name == ADDON_NAME or security == "SECURE" or BetterAddonListDB.protected[name]
+	return name == ADDON_NAME or security == "SECURE" or BetterAddonListDB.protected[tostring(name)]
 end
 
 local function SetAddonProtected(index, value)
 	if not index then return end
 	local name, _, _, _, _, security = GetAddOnInfo(index)
 	if name ~= ADDON_NAME and security == "INSECURE" then
-		BetterAddonListDB.protected[name] = value and true or nil
+		BetterAddonListDB.protected[tostring(name)] = value and true or nil
 	end
 end
 
