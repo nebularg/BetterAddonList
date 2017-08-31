@@ -1,11 +1,11 @@
+-- luacheck: globals BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
+-- luacheck: globals StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
+-- luacheck: globals FauxScrollFrame_Update SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns AddonTooltip_BuildDeps
+-- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListScrollFrame AddonList_Enable
+-- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonList_Update ADDON_BUTTON_HEIGHT MAX_ADDONS_DISPLAYED SOUNDKIT
+
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
-
--- GLOBALS: BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
--- GLOBALS: StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
--- GLOBALS: FauxScrollFrame_Update SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns AddonTooltip_BuildDeps
--- GLOBALS: AddonList AddonCharacterDropDown AddonListForceLoad AddonListScrollFrame AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus
--- GETGLOBALFILE OFF
 
 local _G = _G
 local tconcat, After, NewTicker = table.concat, C_Timer.After, C_Timer.NewTicker
