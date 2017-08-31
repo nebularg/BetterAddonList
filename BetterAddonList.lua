@@ -880,7 +880,7 @@ do
 	dropdown.displayMode = "MENU"
 
 	filterButton:SetScript("OnClick", function(self)
-		PlaySound("igMainMenuOptionCheckBoxOn")
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 		ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 74, 15)
 	end)
 end
