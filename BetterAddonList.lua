@@ -72,6 +72,25 @@ function addon:ADDON_LOADED(name)
 
 	character = UnitName("player")
 
+	--- From BlizzBugsSuck (https://mods.curse.com/addons/wow/blizzbugssuck):
+	-- Fix glitchy-ness of EnableAddOn/DisableAddOn API, which affects the stability of the default
+	-- UI's addon management list (both in-game and glue), as well as any addon-management addons.
+	-- The problem is caused by broken defaulting logic used to merge AddOns.txt settings across
+	-- characters to those missing a setting in AddOns.txt, whereby toggling an addon for a single character
+	-- sometimes results in also toggling it for a different character on that realm for no obvious reason.
+	-- The code below ensures each character gets an independent enable setting for each installed
+	-- addon in its AddOns.txt file, thereby avoiding the broken defaulting logic.
+	-- Note the fix applies to each character the first time it loads there, and a given character
+	-- is not protected from the faulty logic on addon X until after the fix has run with addon X
+	-- installed (regardless of enable setting) and the character has logged out normally.
+	for i = 1, GetNumAddOns() do
+		if GetAddOnEnableState(character, i) > 0 then
+			EnableAddOn(i, character)
+		else
+			DisableAddOn(i, character)
+		end
+	end
+
 	hooksecurefunc("DisableAllAddOns", function()
 		self:EnableProtected()
 	end)
