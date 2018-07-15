@@ -164,6 +164,15 @@ function addon:PLAYER_LOGIN()
 	-- default to showing the player profile
 	UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
 
+	-- fix the "Load AddOn" text overflowing for some locales
+	local loadAddonText = GetLocale() == "ruRU" and "Загрузить" or LOAD_ADDON
+	local loadAddonSize = #loadAddonText > 12 and 120 or 100
+	for i=1, MAX_ADDONS_DISPLAYED do
+		local button = _G["AddonListEntry"..i].LoadAddonButton
+		button:SetText(loadAddonText)
+		button:SetWidth(loadAddonSize)
+	end
+
 	SLASH_BETTERADDONLIST1 = "/addons"
 	SLASH_BETTERADDONLIST2 = "/acp" -- muscle memory ;[
 	SLASH_BETTERADDONLIST3 = "/bal" -- why not
