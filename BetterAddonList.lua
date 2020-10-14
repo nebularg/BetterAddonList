@@ -1,5 +1,5 @@
 -- luacheck: globals BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
--- luacheck: globals StaticPopup_Show UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
+-- luacheck: globals StaticPopup_Show UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
 -- luacheck: globals FauxScrollFrame_Update SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns AddonTooltip_BuildDeps
 -- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListScrollFrame AddonList_Enable
 -- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonList_Update ADDON_BUTTON_HEIGHT MAX_ADDONS_DISPLAYED SOUNDKIT
@@ -564,8 +564,7 @@ do
 		end
 	end
 	local dropdown = CreateFrame("Frame", "BetterAddonListSetsDropDown", AddonList, "UIDropDownMenuTemplate")
-	dropdown.initialize = menu
-	dropdown.displayMode = "MENU"
+	UIDropDownMenu_Initialize(dropdown, menu, "MENU")
 
 	local button = CreateFrame("Button", "BetterAddonListSetsButton", AddonList, "UIPanelButtonTemplate")
 	button:SetPoint("LEFT", AddonCharacterDropDownButton, "RIGHT", 3, 0)
@@ -885,8 +884,7 @@ do
 	end
 
 	local dropdown = CreateFrame("Frame", "BetterAddonListFilterDropDown", AddonList, "UIDropDownMenuTemplate")
-	dropdown.initialize = menu
-	dropdown.displayMode = "MENU"
+	UIDropDownMenu_Initialize(dropdown, menu, "MENU")
 
 	filterButton:SetScript("OnClick", function(self)
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
