@@ -774,29 +774,33 @@ end
 
 -- search / filter
 do
+	AddonList.filterList = {}
+	local filterList = AddonList.filterList
+
 	local filters = { -- for menu order
 		"ENABLED",
 		"DISABLED",
 		"LOD",
 		"PROTECTED",
 	}
+	for _, key in next, filters do
+		filterList[key] = false
+	end
+
 	local filterFunc = {
 		ENABLED = function(index) return GetAddOnEnableState(character, index) > 0 end,
 		DISABLED = function(index) return GetAddOnEnableState(character, index) == 0 end,
 		LOD = function(index) return IsAddOnLoadOnDemand(index) end,
 		PROTECTED = function(index) return IsAddonProtected(index) end,
 	}
-	local function checkFilters(active, index)
-		for filter in next, active do
-			if not filterFunc[filter](index) then
+	local function checkFilters(index)
+		for filter, value in next, filterList do
+			if value and not filterFunc[filter](index) then
 				return false
 			end
 		end
 		return true
 	end
-
-	AddonList.filterList = {}
-	local filterList = AddonList.filterList
 
 	local strfind = string.find
 	local searchList = {}
@@ -813,7 +817,7 @@ do
 			wipe(searchList)
 			for i=1, GetNumAddOns() do
 				local name, title, notes = GetAddOnInfo(i)
-				if (searchString == "" or (strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)))) and checkFilters(filterList, i) then
+				if (searchString == "" or (strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)))) and checkFilters(i) then
 					searchList[#searchList+1] = i
 				end
 			end
@@ -849,7 +853,7 @@ do
 			for _, key in ipairs(filters) do
 				info.text = L[("FILTER_%s"):format(key)]
 				info.func = function(_, _, _, checked)
-					filterList[key] = checked or nil
+					filterList[key] = checked
 					OnTextChanged(editBox)
 				end
 				info.checked = filterList[key]
