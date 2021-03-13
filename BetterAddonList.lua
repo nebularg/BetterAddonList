@@ -2,7 +2,7 @@
 -- luacheck: globals StaticPopup_Show UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
 -- luacheck: globals FauxScrollFrame_Update SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns AddonTooltip_BuildDeps
 -- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListScrollFrame AddonList_Enable
--- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonList_Update ADDON_BUTTON_HEIGHT MAX_ADDONS_DISPLAYED SOUNDKIT
+-- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonList_Update AddonTooltip_Update ADDON_BUTTON_HEIGHT MAX_ADDONS_DISPLAYED SOUNDKIT
 
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
@@ -625,32 +625,51 @@ do
 		AddonList_Update()
 	end)
 
-	hooksecurefunc("AddonTooltip_Update", function(self)
-		local memory = self.memory
-		if memory then
-			local text = ""
-			if memory > 1000 then
-				memory = memory / 1000
-				text = L["Memory: %.02f MB"]:format(memory)
-			else
-				text = L["Memory: %.0f KB"]:format(memory)
-			end
-			GameTooltip:AddLine(text)
-		end
-	end)
-
-	AddonTooltip_BuildDeps = function(...) -- replaced!
-		if select("#", ...) == 0 then
-			return ""
-		end
-
-		local deps = {...}
-		for i, dep in ipairs(deps) do
+	local function buildDeps(...)
+		local deps = ""
+		for i = 1, select("#", ...) do
+			local dep = select(i, ...)
 			if GetAddOnEnableState(character, dep) == 0 then
-				deps[i] = ("|cffff2020%s|r"):format(dep)
+				dep = ("|cffff2020%s|r"):format(dep)
+			end
+			if i == 1 then
+				deps = ADDON_DEPENDENCIES .. dep
+			else
+				deps = deps .. ", " .. dep
 			end
 		end
-		return ADDON_DEPENDENCIES .. tconcat(deps, ", ")
+		return deps
+	end
+
+	AddonTooltip_Update = function(owner)
+		local index = owner:GetID()
+		local name, title, notes, _, _, security = GetAddOnInfo(index)
+		GameTooltip:ClearLines()
+		if security == "BANNED" then
+			GameTooltip:SetText(ADDON_BANNED_TOOLTIP)
+		else
+			local version = GetAddOnMetadata(index, "Version")
+			if version and version ~= "@project-version@" then
+				GameTooltip:AddDoubleLine(title or name, version)
+			else
+				GameTooltip:AddLine(title or name)
+			end
+			GameTooltip:AddLine(notes, 1.0, 1.0, 1.0)
+			GameTooltip:AddLine(buildDeps(GetAddOnDependencies(index)))
+
+			local memory = owner.memory
+			if memory then
+				local text = ""
+				if memory > 1000 then
+					memory = memory / 1000
+					text = L["Memory: %.02f MB"]:format(memory)
+				else
+					text = L["Memory: %.0f KB"]:format(memory)
+				end
+				GameTooltip:AddLine(text)
+			end
+		end
+		GameTooltip:Show()
 	end
 
 	-- Update the panel my way
