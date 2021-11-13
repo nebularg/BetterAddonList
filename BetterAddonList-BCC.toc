@@ -1,0 +1,11 @@
+## Interface: 20502
+## Title: BetterAddonList
+## Notes: Enhances the default AddOns list.
+## Author: Neb
+## Version: @project-version@
+## X-Curse-Project-ID: 86704
+## SavedVariables: BetterAddonListDB
+
+locales.xml
+
+BetterAddonList.lua

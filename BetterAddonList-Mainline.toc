@@ -1,0 +1,10 @@
+## Interface: 90105
+## Title: BetterAddonList
+## Notes: Enhances the default AddOns list.
+## Author: Neb
+## Version: @project-version@
+## SavedVariables: BetterAddonListDB
+
+locales.xml
+
+BetterAddonList.lua
