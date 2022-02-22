@@ -1,8 +1,9 @@
-## Interface: 90105
+## Interface: 90200
 ## Title: BetterAddonList
 ## Notes: Enhances the default AddOns list.
 ## Author: Neb
 ## Version: @project-version@
+## X-Curse-Project-ID: 86704
 ## SavedVariables: BetterAddonListDB
 
 locales.xml
