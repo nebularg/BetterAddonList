@@ -643,6 +643,8 @@ do
 
 	AddonTooltip_Update = function(owner)
 		local index = owner:GetID()
+		if not index or index < 1 or index > GetNumAddOns() then return end
+
 		local name, title, notes, _, _, security = GetAddOnInfo(index)
 		GameTooltip:ClearLines()
 		if security == "BANNED" then
