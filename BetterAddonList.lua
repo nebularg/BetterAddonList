@@ -17,6 +17,8 @@ local ADDON_DEPENDENCIES = ADDON_DEPENDENCIES
 
 local L = ns.L
 
+local wow_1000 = select(4, GetBuildInfo()) >= 100000
+
 local sets = nil
 local included = nil
 local character = nil
@@ -168,9 +170,12 @@ function addon:PLAYER_LOGIN()
 	local loadAddonText = GetLocale() == "ruRU" and "Загрузить" or LOAD_ADDON
 	local loadAddonSize = #loadAddonText > 12 and 120 or 100
 	for i=1, MAX_ADDONS_DISPLAYED do
-		local button = _G["AddonListEntry"..i].LoadAddonButton
-		button:SetText(loadAddonText)
-		button:SetWidth(loadAddonSize)
+		local entry = _G["AddonListEntry"..i]
+		if entry then -- XXX beta
+			local button = entry.LoadAddonButton
+			button:SetText(loadAddonText)
+			button:SetWidth(loadAddonSize)
+		end
 	end
 
 	SLASH_BETTERADDONLIST1 = "/addons"
@@ -589,30 +594,31 @@ do
 	local memIcons = {}
 	for i=1, MAX_ADDONS_DISPLAYED do
 		local checkbox = _G["AddonListEntry"..i.."Enabled"]
+		if checkbox then -- XXX beta
+			local lock = CreateFrame("Button", nil, _G["AddonListEntry"..i], nil, i)
+			lock:SetSize(16, 16)
+			lock:SetPoint("CENTER", checkbox, "CENTER")
+			lock:SetNormalTexture([[Interface\Glues\CharacterSelect\Glues-AddOn-Icons]])
+			lock:GetNormalTexture():SetTexCoord(0, 16/64, 0, 1) -- AddonList_SetSecurityIcon
+			lock:SetScript("OnClick", OnClick)
+			lock:Hide()
+			lockIcons[i] = lock
 
-		local lock = CreateFrame("Button", nil, _G["AddonListEntry"..i], nil, i)
-		lock:SetSize(16, 16)
-		lock:SetPoint("CENTER", checkbox, "CENTER")
-		lock:SetNormalTexture([[Interface\Glues\CharacterSelect\Glues-AddOn-Icons]])
-		lock:GetNormalTexture():SetTexCoord(0, 16/64, 0, 1) -- AddonList_SetSecurityIcon
-		lock:SetScript("OnClick", OnClick)
-		lock:Hide()
-		lockIcons[i] = lock
+			checkbox:HookScript("OnClick", function(self, ...) OnClick(lock, ...) end)
 
-		checkbox:HookScript("OnClick", function(self, ...) OnClick(lock, ...) end)
-
-		local mem = CreateFrame("Button", nil, _G["AddonListEntry"..i], nil, i)
-		mem:SetSize(6, 32)
-		mem:SetPoint("RIGHT", checkbox, "LEFT", 1, 0)
-		mem:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
-		memIcons[i] = mem
+			local mem = CreateFrame("Button", nil, _G["AddonListEntry"..i], nil, i)
+			mem:SetSize(6, 32)
+			mem:SetPoint("RIGHT", checkbox, "LEFT", 1, 0)
+			mem:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+			memIcons[i] = mem
+		end
 	end
 
 	local updater = CreateFrame("Frame", nil, AddonList)
 	updater:SetScript("OnShow", function(self)
 		UpdateAddOnMemoryUsage()
 		if not self.timer then
-			self.timer = NewTicker(10, UpdateAddOnMemoryUsage)
+			self.timer = NewTicker(10, function() UpdateAddOnMemoryUsage() end)
 		end
 	end)
 	updater:SetScript("OnHide", function(self)
@@ -676,6 +682,8 @@ do
 
 	-- Update the panel my way
 	AddonList_Update = function()
+		if wow_1000 then return end -- XXX beta
+
 		if AddonList.searchList then
 			local numEntrys = #AddonList.searchList
 			for i=1, MAX_ADDONS_DISPLAYED do
@@ -847,6 +855,8 @@ do
 		end
 	end
 
+	if not wow_1000 then -- XXX beta
+
 	local editBox = CreateFrame("EditBox", "BetterAddonListSearchBox", AddonList, "SearchBoxTemplate")
 	editBox:SetPoint("TOPRIGHT", -107, -33) -- -107 w/filter, -11 w/o
 	editBox:SetSize(115, 20)
@@ -915,6 +925,8 @@ do
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 		ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 74, 15)
 	end)
+
+	end -- XXX beta
 end
 
 function addon:EnableProtected()
