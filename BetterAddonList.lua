@@ -162,7 +162,10 @@ function addon:PLAYER_LOGIN()
 	--UIPanelWindows["AddonList"].area = nil
 
 	-- default to showing the player profile
-	UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
+	-- UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
+	-- XXX try to avoid taint by doing this directly
+	AddonCharacterDropDown.selectedValue = character
+	AddonCharacterDropDown.Text:SetText(character)
 
 	SLASH_BETTERADDONLIST1 = "/addons"
 	SLASH_BETTERADDONLIST2 = "/acp" -- muscle memory ;[
