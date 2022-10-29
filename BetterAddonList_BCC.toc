@@ -8,4 +8,4 @@
 
 locales.xml
 
-BetterAddonList.lua
+BetterAddonList_Classic.lua
