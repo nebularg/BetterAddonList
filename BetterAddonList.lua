@@ -1,11 +1,13 @@
 -- luacheck: globals BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
--- luacheck: globals StaticPopup_Show UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
+-- luacheck: globals UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
 -- luacheck: globals SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns CreateDataProvider CreateIndexRangeDataProvider
 -- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonList_Enable
 -- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonList_Update AddonTooltip_Update SOUNDKIT
 
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
+
+local LibDialog = LibStub("LibDialog-1.0")
 
 local _G = _G
 local After, NewTicker = C_Timer.After, C_Timer.NewTicker
@@ -224,124 +226,137 @@ function addon:Print(...)
 	print("|cff33ff99BetterAddonList|r:", tostringall(...))
 end
 
-StaticPopupDialogs["BETTER_ADDONLIST_SAVESET"] = {
-	text = L["Save the currently selected addons to %s?"],
-	button1 = YES,
-	button2 = CANCEL,
-	OnAccept = function(self) addon:SaveSet(self.data) end,
-	OnShow = function(self) CloseDropDownMenus(1) end,
-	OnHide = function(self) self.data = nil end,
-	timeout = 0,
-	hideOnEscape = 1,
-	whileDead = 1,
-	exclusive = 1,
-	preferredIndex = 3,
-}
+LibDialog:Register("BETTER_ADDONLIST_SAVESET", {
+	buttons = {
+		{ text = OKAY, on_click = function(self, data) addon:SaveSet(data) end, },
+		{ text = CANCEL, },
+	},
+	on_show = function(self, data)
+		self.text:SetFormattedText(L["Save the currently selected addons to %s?"], data)
+		CloseDropDownMenus(1)
+	end,
+	no_close_button = true,
+	hide_on_escape = true,
+	show_while_dead = true,
+})
 
-StaticPopupDialogs["BETTER_ADDONLIST_DELETESET"] = {
-	text = L["Delete set %s?"],
-	button1 = YES,
-	button2 = CANCEL,
-	OnAccept = function(self) addon:DeleteSet(self.data) end,
-	OnShow = function(self) CloseDropDownMenus(1) end,
-	OnHide = function(self) self.data = nil end,
-	timeout = 0,
-	hideOnEscape = 1,
-	whileDead = 1,
-	exclusive = 1,
-	preferredIndex = 3,
-}
+LibDialog:Register("BETTER_ADDONLIST_DELETESET", {
+	buttons = {
+		{ text = OKAY, on_click = function(self, data) addon:DeleteSet(data) end, },
+		{ text = CANCEL, },
+	},
+	on_show = function(self, data)
+		self.text:SetFormattedText(L["Delete set %s?"], data)
+		CloseDropDownMenus(1)
+	end,
+	no_close_button = true,
+	hide_on_escape = true,
+	show_while_dead = true,
+})
 
-StaticPopupDialogs["BETTER_ADDONLIST_NEWSET"] = {
+LibDialog:Register("BETTER_ADDONLIST_NEWSET", {
 	text = L["Enter the name for the new set"],
-	button1 = OKAY,
-	button2 = CANCEL,
-	OnAccept = function(self)
-		local name = self.editBox:GetText()
-		if sets[name] then
-			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
-			return
-		end
-		addon:SaveSet(name)
-	end,
-	EditBoxOnEnterPressed = function(self)
-		local name = self:GetParent().editBox:GetText():trim()
-		self:GetParent():Hide()
-		if sets[name] then
-			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
-			return
-		end
-		addon:SaveSet(name)
-	end,
-	EditBoxOnEscapePressed = function(self)
-		self:GetParent():Hide()
-	end,
-	OnShow = function(self)
-		CloseDropDownMenus(1)
-		self.editBox:SetFocus()
-	end,
-	OnHide = function(self)
-		self.editBox:SetText("")
-	end,
-	timeout = 0,
-	hideOnEscape = 1,
-	exclusive = 1,
-	whileDead = 1,
-	hasEditBox = 1,
-	preferredIndex = 3,
-}
+	buttons = {
+		{
+			text = OKAY,
+			on_click = function(self)
+				local text = self.editboxes[1]:GetText():trim()
+				LibDialog:Dismiss("BETTER_ADDONLIST_NEWSET")
+				if sets[text] then
+					LibDialog:Spawn("BETTER_ADDONLIST_ERROR_NAME", {text, "BETTER_ADDONLIST_NEWSET"})
+					return true
+				end
+				addon:SaveSet(text)
+			end,
+		},
+		{ text = CANCEL, },
+	},
+	editboxes = {
+		{
+			on_enter_pressed = function(editbox)
+				local text = editbox:GetText():trim()
+				LibDialog:Dismiss("BETTER_ADDONLIST_NEWSET")
+				if sets[text] then
+					LibDialog:Spawn("BETTER_ADDONLIST_ERROR_NAME", {text, "BETTER_ADDONLIST_NEWSET"})
+					return true
+				end
+				addon:SaveSet(text)
+			end,
+			on_escape_pressed = function()
+				LibDialog:Dismiss("BETTER_ADDONLIST_NEWSET")
+			end,
+			auto_focus = true,
+		},
+	},
+	on_show = function(self) CloseDropDownMenus(1) end,
+	no_close_button = true,
+	hide_on_escape = true,
+	show_while_dead = true,
+})
 
-StaticPopupDialogs["BETTER_ADDONLIST_RENAMESET"] = {
-	text = L["Enter the new name for %s"],
-	button1 = OKAY,
-	button2 = CANCEL,
-	OnAccept = function(self)
-		local text = self.editBox:GetText()
-		addon:RenameSet(self.data, text)
-	end,
-	EditBoxOnEnterPressed = function(self)
-		local dialog = self:GetParent()
-		local text = dialog.editBox:GetText()
-		addon:RenameSet(dialog.data, text)
-		dialog:Hide()
-	end,
-	EditBoxOnEscapePressed = function(self)
-		self:GetParent():Hide()
-	end,
-	OnShow = function(self)
+LibDialog:Register("BETTER_ADDONLIST_RENAMESET", {
+	buttons = {
+		{
+			text = OKAY,
+			on_click = function(self, data)
+				local text = self.editboxes[1]:GetText():trim()
+				LibDialog:Dismiss("BETTER_ADDONLIST_RENAMESET")
+				if sets[text] then
+					LibDialog:Spawn("BETTER_ADDONLIST_ERROR_NAME", {text, "BETTER_ADDONLIST_RENAMESET", data})
+					return true
+				end
+				addon:RenameSet(data, text)
+			end,
+		},
+		{ text = CANCEL, },
+	},
+	editboxes = {
+		{
+			on_enter_pressed = function(editbox, data)
+				local text = editbox:GetText():trim()
+				LibDialog:Dismiss("BETTER_ADDONLIST_RENAMESET")
+				if sets[text] then
+					LibDialog:Spawn("BETTER_ADDONLIST_ERROR_NAME", {text, "BETTER_ADDONLIST_RENAMESET", data})
+					return true
+				end
+				addon:RenameSet(data, text)
+			end,
+			on_escape_pressed = function()
+				LibDialog:Dismiss("BETTER_ADDONLIST_RENAMESET")
+			end,
+			auto_focus = true,
+		},
+	},
+	on_show = function(self, data)
+		self.text:SetFormattedText(L["Enter the new name for %s"], data)
 		CloseDropDownMenus(1)
-		self.editBox:SetFocus()
 	end,
-	OnHide = function(self)
-		self.editBox:SetText("")
-		self.data = nil
-	end,
-	timeout = 0,
-	hideOnEscape = 1,
-	exclusive = 1,
-	whileDead = 1,
-	hasEditBox = 1,
-	preferredIndex = 3,
-}
+	no_close_button = true,
+	hide_on_escape = true,
+	show_while_dead = true,
+})
 
-StaticPopupDialogs["BETTER_ADDONLIST_ERROR_NAME"] = {
-	text = L["There is already a set named \"%s\".\nPlease choose another name."],
-	button1 = OKAY,
-	button2 = CANCEL,
-	OnAccept = function(self)
-		local name, text = unpack(self.data)
-		StaticPopup_Show(name, text)
+LibDialog:Register("BETTER_ADDONLIST_ERROR_NAME", {
+	buttons = {
+		{
+			text = OKAY,
+			on_click = function(self, data)
+				LibDialog:Dismiss("BETTER_ADDONLIST_ERROR_NAME")
+				LibDialog:Spawn(data[2], data[3])
+				return true
+			end,
+		},
+		{ text = CANCEL, },
+	},
+	on_show = function(self, data)
+		self.text:SetFormattedText(L["There is already a set named \"%s\".\nPlease choose another name."], data[1])
 	end,
-	OnHide = function(self)
-		self.data = nil
-	end,
-	timeout = 0,
-	hideOnEscape = 1,
-	whileDead = 1,
-	exclusive = 1,
-	showAlert = 1,
-	preferredIndex = 3,
-}
+	icon = _G.STATICPOPUP_TEXTURE_ALERT,
+	-- cancels_on_spawn = { "BETTER_ADDONLIST_NEWSET", "BETTER_ADDONLIST_RENAMESET" },
+	no_close_button = true,
+	hide_on_escape = true,
+	show_while_dead = true,
+})
 
 -- sets menu
 do
@@ -403,7 +418,7 @@ do
 			info.notCheckable = 1
 
 			info.text = L["Create new set"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_NEWSET") end
+			info.func = function() LibDialog:Spawn("BETTER_ADDONLIST_NEWSET") end
 			UIDropDownMenu_AddButton(info, level)
 
 			info.text = L["Reset"]
@@ -449,15 +464,15 @@ do
 			info.tooltipText = nil
 
 			info.text = L["Save"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_SAVESET", CURRENT_SET, nil, CURRENT_SET) end
+			info.func = function() LibDialog:Spawn("BETTER_ADDONLIST_SAVESET", CURRENT_SET) end
 			UIDropDownMenu_AddButton(info, level)
 
 			info.text = L["Rename"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_RENAMESET", CURRENT_SET, nil, CURRENT_SET) end
+			info.func = function() LibDialog:Spawn("BETTER_ADDONLIST_RENAMESET", CURRENT_SET) end
 			UIDropDownMenu_AddButton(info, level)
 
 			info.text = L["Delete"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_DELETESET", CURRENT_SET, nil, CURRENT_SET) end
+			info.func = function() LibDialog:Spawn("BETTER_ADDONLIST_DELETESET", CURRENT_SET) end
 			UIDropDownMenu_AddButton(info, level)
 
 			UIDropDownMenu_AddButton(separator, level)
@@ -925,10 +940,7 @@ end
 
 function addon:RenameSet(name, newName)
 	if not sets[name] then return end
-	if sets[newName] then
-		StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", newName, nil, {"BETTER_ADDONLIST_RENAMESET", name, nil, name})
-		return
-	end
+	if sets[newName] then return end
 
 	sets[newName] = CopyTable(sets[name])
 	sets[name] = nil

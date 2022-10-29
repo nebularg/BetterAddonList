@@ -6,6 +6,9 @@
 ## X-Curse-Project-ID: 86704
 ## SavedVariables: BetterAddonListDB
 
+libs\LibStub.lua
+libs\LibDialog-1.0.lua
+
 locales.xml
 
 BetterAddonList.lua
