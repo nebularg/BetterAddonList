@@ -891,7 +891,12 @@ function addon:EnableProtected()
 	end
 end
 
-local function enable_set(name, done)
+function addon:LoadSet(name)
+	DisableAllAddOns(character)
+	self:EnableSet(name)
+end
+
+function addon:EnableSet(name, done)
 	local set = sets[name]
 	if set and #set > 0 then
 		for i=1, GetNumAddOns() do
@@ -906,24 +911,11 @@ local function enable_set(name, done)
 		for included_set in next, included[name] do
 			if not done[included_set] then
 				done[included_set] = true
-				enable_set(included_set, done)
+				self:EnableSet(included_set, done)
 			end
 		end
 	end
 	UpdateList()
-end
-
-function addon:LoadSet(name)
-	DisableAllAddOns(character)
-	enable_set(name)
-	self:Print(L["Enabled only addons in set %q."]:format(name))
-	return true
-end
-
-function addon:EnableSet(name, done)
-	enable_set(name, done)
-	self:Print(L["Enabled addons in set %q."]:format(name))
-	return true
 end
 
 function addon:DisableSet(name)
@@ -937,8 +929,6 @@ function addon:DisableSet(name)
 		end
 	end
 	UpdateList()
-	self:Print(L["Disabled addons in set %q."]:format(name))
-	return true
 end
 
 function addon:SaveSet(name)
@@ -957,22 +947,18 @@ function addon:SaveSet(name)
 			set[#set+1] = GetAddOnInfo(i)
 		end
 	end
-	return true
 end
 
 function addon:RenameSet(name, newName)
-	if name == newName then return end
 	if not sets[name] then return end
 	if sets[newName] then return end
 
 	sets[newName] = CopyTable(sets[name])
 	sets[name] = nil
-	return true
 end
 
 function addon:DeleteSet(name)
 	if not sets[name] then return end
 
 	sets[name] = nil
-	return true
 end
