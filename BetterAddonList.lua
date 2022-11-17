@@ -2,7 +2,7 @@
 -- luacheck: globals UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
 -- luacheck: globals SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns CreateDataProvider CreateIndexRangeDataProvider
 -- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonList_Enable
--- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonList_Update AddonTooltip_Update SOUNDKIT
+-- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonTooltip_Update SOUNDKIT
 
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
@@ -12,10 +12,12 @@ local LibDialog = LibStub("LibDialog-1.0")
 local _G = _G
 local After, NewTicker = C_Timer.After, C_Timer.NewTicker
 
-local loadAddonText = GetLocale() == "ruRU" and "Загрузить" or _G.LOAD_ADDON
 local ADDON_DEPENDENCIES = ADDON_DEPENDENCIES
 
 local L = ns.L
+L.LOAD_ADDON = GetLocale() == "ruRU" and "Загрузить" or _G.LOAD_ADDON
+
+local UpdateList
 
 local sets = nil
 local included = nil
@@ -206,11 +208,11 @@ function addon:PLAYER_LOGIN()
 			end
 		elseif command == "disableall" then
 			DisableAllAddOns(character)
-			_G.AddonList_Update()
+			UpdateList()
 			self:Print(L["Disabled all addons."])
 		elseif command == "reset" then
 			ResetAddOns()
-			_G.AddonList_Update()
+			UpdateList()
 			self:Print(L["Reset addons to what was enabled at login."])
 		end
 	end
@@ -427,7 +429,7 @@ do
 			info.text = L["Reset"]
 			info.func = function()
 				ResetAddOns()
-				_G.AddonList_Update()
+				UpdateList()
 			end
 			info.tooltipTitle = info.text
 			info.tooltipText = L["Reset addons to what was enabled at login."]
@@ -683,15 +685,15 @@ do
 
 		-- fix the "Load AddOn" text overflowing for some locales
 		local load = entry.LoadAddonButton
-		load:SetText(loadAddonText)
-		load:SetWidth(#loadAddonText > 12 and 120 or 100)
+		load:SetText(L.LOAD_ADDON)
+		load:SetWidth(#L.LOAD_ADDON > 12 and 120 or 100)
 
 		local enabled = GetAddOnEnableState(character, addonIndex) > 0
 		if enabled then
 			local depsEnabled = CheckAddonDependencies(GetAddOnDependencies(addonIndex))
 			if not depsEnabled then
 				title:SetTextColor(1.0, 0.1, 0.1)
-				status:SetText(_G["ADDON_DEP_DISABLED"])
+				status:SetText(_G.ADDON_DEP_DISABLED)
 			end
 			if IsAddOnLoadOnDemand(addonIndex) and not IsAddOnLoaded(addonIndex) and depsEnabled then
 				AddonList_SetStatus(entry, true, false, false)
@@ -785,11 +787,17 @@ do
 			end
 			if #list > 0 then
 				searchList:InsertTable(list)
-				AddonList.ScrollBox:SetDataProvider(searchList, true)
-				return
 			end
 		end
-		AddonList.ScrollBox:SetDataProvider(fullList, true)
+		UpdateList()
+	end
+
+	function UpdateList()
+		if not AddonList.searchList:IsEmpty() then
+			AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
+		else
+			AddonList.ScrollBox:SetDataProvider(fullList, true)
+		end
 	end
 
 	hooksecurefunc("AddonList_Update", function()
@@ -907,7 +915,7 @@ function addon:EnableSet(name, done)
 			end
 		end
 	end
-	_G.AddonList_Update()
+	UpdateList()
 end
 
 function addon:DisableSet(name)
@@ -920,7 +928,7 @@ function addon:DisableSet(name)
 			end
 		end
 	end
-	_G.AddonList_Update()
+	UpdateList()
 end
 
 function addon:SaveSet(name)
