@@ -1,8 +1,9 @@
 -- luacheck: globals BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
 -- luacheck: globals UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
 -- luacheck: globals SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns CreateDataProvider CreateIndexRangeDataProvider
--- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonList_Enable
--- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonTooltip_Update SOUNDKIT
+-- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListOkayButton
+-- luacheck: globals AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonList_HasAnyChanged AddonTooltip_Update
+-- luacheck: globals SOUNDKIT
 
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
@@ -10,7 +11,6 @@ BetterAddonListDB = BetterAddonListDB or {}
 local LibDialog = LibStub("LibDialog-1.0")
 
 local _G = _G
-local After, NewTicker = C_Timer.After, C_Timer.NewTicker
 
 local L = ns.L
 L.LOAD_ADDON = GetLocale() == "ruRU" and "Загрузить" or _G.LOAD_ADDON
@@ -116,7 +116,7 @@ function addon:ADDON_LOADED(addon_name)
 		EnableAddOn(name)
 	end
 	if next(messages) then
-		After(12, function()
+		C_Timer.After(12, function()
 			local ood, dep = nil, nil
 			for name, reason in next, messages do
 				self:Print(L["Problem with protected addon %q (%s)"]:format(name, _G["ADDON_"..reason]))
@@ -596,7 +596,7 @@ do
 	updater:SetScript("OnShow", function(self)
 		UpdateAddOnMemoryUsage()
 		if not self.timer then
-			self.timer = NewTicker(10, function() UpdateAddOnMemoryUsage() end)
+			self.timer = C_Timer.NewTicker(30, function() UpdateAddOnMemoryUsage() end)
 		end
 	end)
 	updater:SetScript("OnHide", function(self)
