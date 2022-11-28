@@ -12,8 +12,6 @@ local LibDialog = LibStub("LibDialog-1.0")
 local _G = _G
 local After, NewTicker = C_Timer.After, C_Timer.NewTicker
 
-local ADDON_DEPENDENCIES = ADDON_DEPENDENCIES
-
 local L = ns.L
 L.LOAD_ADDON = GetLocale() == "ruRU" and "Загрузить" or _G.LOAD_ADDON
 
@@ -614,7 +612,7 @@ do
 				dep = ("|cffff2020%s|r"):format(dep)
 			end
 			if i == 1 then
-				deps = ADDON_DEPENDENCIES .. dep
+				deps = _G.ADDON_DEPENDENCIES .. dep
 			else
 				deps = deps .. ", " .. dep
 			end
