@@ -798,6 +798,14 @@ do
 		else
 			AddonList.ScrollBox:SetDataProvider(fullList, true)
 		end
+
+		if AddonList_HasAnyChanged() then
+			AddonListOkayButton:SetText(_G.RELOADUI)
+			AddonList.shouldReload = true
+		else
+			AddonListOkayButton:SetText(_G.OKAY)
+			AddonList.shouldReload = false
+		end
 	end
 
 	hooksecurefunc("AddonList_Update", function()
