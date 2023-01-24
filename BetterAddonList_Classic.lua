@@ -8,7 +8,7 @@ local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
 local _G = _G
-local tconcat, After, NewTicker = table.concat, C_Timer.After, C_Timer.NewTicker
+local tconcat = table.concat
 
 local AddonList_Update = AddonList_Update
 local ADDON_BUTTON_HEIGHT = ADDON_BUTTON_HEIGHT
@@ -52,8 +52,8 @@ addon:RegisterEvent("ADDON_LOADED")
 addon:RegisterEvent("PLAYER_LOGIN")
 addon:RegisterEvent("PLAYER_LOGOUT")
 
-function addon:ADDON_LOADED(name)
-	if name ~= ADDON_NAME then return end
+function addon:ADDON_LOADED(addon_name)
+	if addon_name ~= ADDON_NAME then return end
 	self:UnregisterEvent("ADDON_LOADED")
 
 	if not BetterAddonListDB.sets then
@@ -116,7 +116,7 @@ function addon:ADDON_LOADED(name)
 		EnableAddOn(name)
 	end
 	if next(messages) then
-		After(12, function()
+		C_Timer.After(12, function()
 			local ood, dep = nil, nil
 			for name, reason in next, messages do
 				self:Print(L["Problem with protected addon %q (%s)"]:format(name, _G["ADDON_"..reason]))
@@ -143,8 +143,8 @@ function addon:PLAYER_LOGIN()
 	mover:SetPoint("TOP", AddonList, "TOP", 0, 0)
 	mover:SetWidth(500)
 	mover:SetHeight(25)
-	mover:SetScript("OnMouseDown", function(self) AddonList:StartMoving() end)
-	mover:SetScript("OnMouseUp", function(self) AddonList:StopMovingOrSizing() end)
+	mover:SetScript("OnMouseDown", function() AddonList:StartMoving() end)
+	mover:SetScript("OnMouseUp", function() AddonList:StopMovingOrSizing() end)
 	AddonList:SetMovable(true)
 	AddonList:ClearAllPoints()
 	AddonList:SetPoint("CENTER")
@@ -612,7 +612,7 @@ do
 	updater:SetScript("OnShow", function(self)
 		UpdateAddOnMemoryUsage()
 		if not self.timer then
-			self.timer = NewTicker(10, UpdateAddOnMemoryUsage)
+			self.timer = C_Timer.NewTicker(30, function() UpdateAddOnMemoryUsage() end)
 		end
 	end)
 	updater:SetScript("OnHide", function(self)
@@ -933,18 +933,18 @@ function addon:EnableSet(name, done)
 	local set = sets[name]
 	if set and #set > 0 then
 		for i=1, GetNumAddOns() do
-			local name = GetAddOnInfo(i)
-			if tContains(set, name) then
+			local addon_name = GetAddOnInfo(i)
+			if tContains(set, addon_name) then
 				EnableAddOn(i, character)
 			end
 		end
 	end
 	if included[name] then
 		done = done or { [name] = true }
-		for set in next, included[name] do
-			if not done[set] then
-				done[set] = true
-				self:EnableSet(set, done)
+		for included_set in next, included[name] do
+			if not done[included_set] then
+				done[included_set] = true
+				self:EnableSet(included_set, done)
 			end
 		end
 	end
@@ -955,8 +955,8 @@ function addon:DisableSet(name)
 	local set = sets[name]
 	if set and #set > 0 then
 		for i=1, GetNumAddOns() do
-			local name = GetAddOnInfo(i)
-			if not IsAddonProtected(i) and tContains(set, name) then
+			local addon_name = GetAddOnInfo(i)
+			if not IsAddonProtected(i) and tContains(set, addon_name) then
 				DisableAddOn(i, character)
 			end
 		end
