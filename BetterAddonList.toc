@@ -4,6 +4,7 @@
 ## Author: Neb
 ## Version: @project-version@
 ## X-Curse-Project-ID: 86704
+## X-Wago-ID: j6jzLO6R
 ## SavedVariables: BetterAddonListDB
 
 libs\LibStub.lua
