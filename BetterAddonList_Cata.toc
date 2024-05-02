@@ -1,4 +1,4 @@
-## Interface: 30403
+## Interface: 40400
 ## Title: BetterAddonList
 ## Notes: Enhances the default AddOns list.
 ## Author: Neb
