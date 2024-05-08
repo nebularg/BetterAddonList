@@ -1,4 +1,4 @@
-## Interface: 100206
+## Interface: 100207
 ## Title: BetterAddonList
 ## Notes: Enhances the default AddOns list.
 ## Author: Neb
