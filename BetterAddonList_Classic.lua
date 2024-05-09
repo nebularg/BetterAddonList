@@ -23,13 +23,13 @@ local character = nil
 
 local function IsAddonProtected(index)
 	if not index then return end
-	local name, _, _, _, _, security = GetAddOnInfo(index)
+	local name, _, _, _, _, security = C_AddOns.GetAddOnInfo(index)
 	return name == ADDON_NAME or security == "SECURE" or BetterAddonListDB.protected[tostring(name)]
 end
 
 local function SetAddonProtected(index, value)
 	if not index then return end
-	local name, _, _, _, _, security = GetAddOnInfo(index)
+	local name, _, _, _, _, security = C_AddOns.GetAddOnInfo(index)
 	if name ~= ADDON_NAME and security == "INSECURE" then
 		BetterAddonListDB.protected[tostring(name)] = value and true or nil
 	end
@@ -38,7 +38,7 @@ end
 local function CheckAddonDependencies(...)
 	for i = 1, select("#", ...) do
 		local dep = select(i, ...)
-		if GetAddOnEnableState(character, dep) == 0 then
+		if C_AddOns.GetAddOnEnableState(dep, character) == 0 then
 			return false
 		end
 	end
@@ -83,24 +83,24 @@ function addon:ADDON_LOADED(addon_name)
 	-- Note the fix applies to each character the first time it loads there, and a given character
 	-- is not protected from the faulty logic on addon X until after the fix has run with addon X
 	-- installed (regardless of enable setting) and the character has logged out normally.
-	for i = 1, GetNumAddOns() do
-		if GetAddOnEnableState(character, i) > 0 then
-			EnableAddOn(i, character)
+	for i = 1, C_AddOns.GetNumAddOns() do
+		if C_AddOns.GetAddOnEnableState(i, character) > 0 then
+			C_AddOns.EnableAddOn(i, character)
 		else
-			DisableAddOn(i, character)
+			C_AddOns.DisableAddOn(i, character)
 		end
 	end
 
-	hooksecurefunc("DisableAllAddOns", function()
+	hooksecurefunc(C_AddOns, "DisableAllAddOns", function()
 		self:EnableProtected()
 	end)
 
 	-- check protected
 	local messages = {}
 	for name in next, BetterAddonListDB.protected do
-		local _, _, _, loadable, reason = GetAddOnInfo(name)
-		if IsAddOnLoadOnDemand(name) then
-			if not CheckAddonDependencies(GetAddOnDependencies(name)) then
+		local _, _, _, loadable, reason = C_AddOns.GetAddOnInfo(name)
+		if C_AddOns.IsAddOnLoadOnDemand(name) then
+			if not CheckAddonDependencies(C_AddOns.GetAddOnDependencies(name)) then
 				loadable, reason = false, "DEP_DISABLED"
 			elseif not loadable and reason == "DEMAND_LOADED" then
 				loadable = true
@@ -113,7 +113,7 @@ function addon:ADDON_LOADED(addon_name)
 				messages[name] = reason or "UNKNOWN_ERROR"
 			end
 		end
-		EnableAddOn(name)
+		C_AddOns.EnableAddOn(name)
 	end
 	if next(messages) then
 		C_Timer.After(12, function()
@@ -126,7 +126,7 @@ function addon:ADDON_LOADED(addon_name)
 					dep = true
 				end
 			end
-			if ood and IsAddonVersionCheckEnabled() then
+			if ood and C_AddOns.IsAddonVersionCheckEnabled() then
 				self:Print(L["Out of date addons are being disabled! They will not be able to load until their interface version is updated or \"Load out of date AddOns\" is checked."])
 			elseif not dep then
 				self:Print(L["Reload UI to load these addons."])
@@ -211,11 +211,11 @@ function addon:PLAYER_LOGIN()
 				self:Print(L["No set named %q."]:format(rest))
 			end
 		elseif command == "disableall" then
-			DisableAllAddOns(character)
+			C_AddOns.DisableAllAddOns(character)
 			_G.AddonList_Update()
 			self:Print(L["Disabled all addons."])
 		elseif command == "reset" then
-			ResetAddOns()
+			C_AddOns.ResetAddOns()
 			_G.AddonList_Update()
 			self:Print(L["Reset addons to what was enabled at login."])
 		end
@@ -419,7 +419,7 @@ do
 
 			info.text = L["Reset"]
 			info.func = function()
-				ResetAddOns()
+				C_AddOns.ResetAddOns()
 				_G.AddonList_Update()
 			end
 			info.tooltipTitle = info.text
@@ -622,7 +622,7 @@ do
 		local deps = ""
 		for i = 1, select("#", ...) do
 			local dep = select(i, ...)
-			if GetAddOnEnableState(character, dep) == 0 then
+			if C_AddOns.GetAddOnEnableState(dep, character) == 0 then
 				dep = ("|cffff2020%s|r"):format(dep)
 			end
 			if i == 1 then
@@ -636,21 +636,21 @@ do
 
 	AddonTooltip_Update = function(owner)
 		local index = owner:GetID()
-		if not index or index < 1 or index > GetNumAddOns() then return end
+		if not index or index < 1 or index > C_AddOns.GetNumAddOns() then return end
 
-		local name, title, notes, _, _, security = GetAddOnInfo(index)
+		local name, title, notes, _, _, security = C_AddOns.GetAddOnInfo(index)
 		GameTooltip:ClearLines()
 		if security == "BANNED" then
 			GameTooltip:SetText(ADDON_BANNED_TOOLTIP)
 		else
-			local version = GetAddOnMetadata(index, "Version")
+			local version = C_AddOns.GetAddOnMetadata(index, "Version")
 			if version and version ~= "@project-version@" then
 				GameTooltip:AddDoubleLine(title or name, version)
 			else
 				GameTooltip:AddLine(title or name)
 			end
 			GameTooltip:AddLine(notes, 1.0, 1.0, 1.0)
-			GameTooltip:AddLine(buildDeps(GetAddOnDependencies(index)))
+			GameTooltip:AddLine(buildDeps(C_AddOns.GetAddOnDependencies(index)))
 
 			local memory = owner.memory
 			if memory then
@@ -679,8 +679,8 @@ do
 					entry:Hide()
 				else
 					-- aaaaand copy from AddonList_Update
-					local name, title, notes, loadable, reason, security = GetAddOnInfo(addonIndex)
-					local enabled = GetAddOnEnableState(character, addonIndex) > 0
+					local name, title, notes, loadable, reason, security = C_AddOns.GetAddOnInfo(addonIndex)
+					local enabled = C_AddOns.GetAddOnEnableState(addonIndex, character) > 0
 
 					local checkbox = _G["AddonListEntry"..i.."Enabled"]
 					checkbox:SetChecked(enabled)
@@ -710,7 +710,7 @@ do
 
 					if enabled ~= AddonList.startStatus[addonIndex] and reason ~= "DEP_DISABLED" then
 						if enabled then
-							local lod = IsAddOnLoadOnDemand(addonIndex) and not IsAddOnLoaded(addonIndex)
+							local lod = C_AddOns.IsAddOnLoadOnDemand(addonIndex) and not C_AddOns.IsAddOnLoaded(addonIndex)
 							AddonList_SetStatus(entry, lod, false, not lod)
 						else
 							AddonList_SetStatus(entry, false, false, true)
@@ -727,7 +727,7 @@ do
 			FauxScrollFrame_Update(AddonListScrollFrame, numEntrys, MAX_ADDONS_DISPLAYED, ADDON_BUTTON_HEIGHT)
 		end
 
-		local numAddons = GetNumAddOns()
+		local numAddons = C_AddOns.GetNumAddOns()
 		for i=1, MAX_ADDONS_DISPLAYED do
 			local entry = _G["AddonListEntry"..i]
 			local checkbox = _G["AddonListEntry"..i.."Enabled"]
@@ -744,14 +744,14 @@ do
 				lockIcon:Hide()
 				checkbox:Show()
 			else
-				local enabled = GetAddOnEnableState(character, addonIndex) > 0
+				local enabled = C_AddOns.GetAddOnEnableState(addonIndex, character) > 0
 				if enabled then
-					local depsEnabled = CheckAddonDependencies(GetAddOnDependencies(addonIndex))
+					local depsEnabled = CheckAddonDependencies(C_AddOns.GetAddOnDependencies(addonIndex))
 					if not depsEnabled then
 						title:SetTextColor(1.0, 0.1, 0.1)
 						status:SetText(_G["ADDON_DEP_DISABLED"])
 					end
-					if IsAddOnLoadOnDemand(addonIndex) and not IsAddOnLoaded(addonIndex) and depsEnabled then
+					if C_AddOns.IsAddOnLoadOnDemand(addonIndex) and not C_AddOns.IsAddOnLoaded(addonIndex) and depsEnabled then
 						AddonList_SetStatus(entry, true, false, false)
 					end
 
@@ -802,9 +802,9 @@ do
 	end
 
 	local filterFunc = {
-		ENABLED = function(index) return GetAddOnEnableState(character, index) > 0 end,
-		DISABLED = function(index) return GetAddOnEnableState(character, index) == 0 end,
-		LOD = function(index) return IsAddOnLoadOnDemand(index) end,
+		ENABLED = function(index) return C_AddOns.GetAddOnEnableState(index, character) > 0 end,
+		DISABLED = function(index) return C_AddOns.GetAddOnEnableState(index, character) == 0 end,
+		LOD = function(index) return C_AddOns.IsAddOnLoadOnDemand(index) end,
 		PROTECTED = function(index) return IsAddonProtected(index) end,
 	}
 	local function checkFilters(index)
@@ -829,8 +829,8 @@ do
 			_G.AddonList_Update()
 		elseif oldText ~= searchString or next(filterList) then
 			wipe(searchList)
-			for i=1, GetNumAddOns() do
-				local name, title, notes = GetAddOnInfo(i)
+			for i=1, C_AddOns.GetNumAddOns() do
+				local name, title, notes = C_AddOns.GetAddOnInfo(i)
 				if (searchString == "" or (strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)))) and checkFilters(i) then
 					searchList[#searchList+1] = i
 				end
@@ -911,24 +911,24 @@ do
 end
 
 function addon:EnableProtected()
-	EnableAddOn(ADDON_NAME)
+	C_AddOns.EnableAddOn(ADDON_NAME)
 	for name in next, BetterAddonListDB.protected do
-		EnableAddOn(name)
+		C_AddOns.EnableAddOn(name)
 	end
 end
 
 function addon:LoadSet(name)
-	DisableAllAddOns(character)
+	C_AddOns.DisableAllAddOns(character)
 	self:EnableSet(name)
 end
 
 function addon:EnableSet(name, done)
 	local set = sets[name]
 	if set and #set > 0 then
-		for i=1, GetNumAddOns() do
-			local addon_name = GetAddOnInfo(i)
+		for i=1, C_AddOns.GetNumAddOns() do
+			local addon_name = C_AddOns.GetAddOnInfo(i)
 			if tContains(set, addon_name) then
-				EnableAddOn(i, character)
+				C_AddOns.EnableAddOn(i, character)
 			end
 		end
 	end
@@ -947,10 +947,10 @@ end
 function addon:DisableSet(name)
 	local set = sets[name]
 	if set and #set > 0 then
-		for i=1, GetNumAddOns() do
-			local addon_name = GetAddOnInfo(i)
+		for i=1, C_AddOns.GetNumAddOns() do
+			local addon_name = C_AddOns.GetAddOnInfo(i)
 			if not IsAddonProtected(i) and tContains(set, addon_name) then
-				DisableAddOn(i, character)
+				C_AddOns.DisableAddOn(i, character)
 			end
 		end
 	end
@@ -967,10 +967,10 @@ function addon:SaveSet(name)
 	end
 	wipe(set)
 
-	for i=1, GetNumAddOns() do
-		local enabled = GetAddOnEnableState(character, i) > 0
+	for i=1, C_AddOns.GetNumAddOns() do
+		local enabled = C_AddOns.GetAddOnEnableState(i, character) > 0
 		if enabled and not IsAddonProtected(i) then
-			set[#set+1] = GetAddOnInfo(i)
+			set[#set+1] = C_AddOns.GetAddOnInfo(i)
 		end
 	end
 end
