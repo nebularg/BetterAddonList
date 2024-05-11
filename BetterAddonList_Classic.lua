@@ -369,7 +369,11 @@ do
 
 	-- pseudo natural sorting
 	local function pad(s)
-		return ("%04d"):format(tonumber(s))
+		local n = tonumber(s)
+		if n < 1000 then
+			return ("%04d"):format(n)
+		end
+		return s
 	end
 	local function natsort(a, b)
 		return a:gsub("(%d+)", pad):lower() < b:gsub("(%d+)", pad):lower()
