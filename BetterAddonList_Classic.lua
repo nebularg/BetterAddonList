@@ -1,14 +1,7 @@
--- luacheck: globals BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
--- luacheck: globals StaticPopup_Show UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
--- luacheck: globals FauxScrollFrame_Update SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns AddonTooltip_BuildDeps
--- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListScrollFrame AddonList_Enable
--- luacheck: globals AddonList_SetSecurityIcon AddonList_SetStatus AddonList_Update AddonTooltip_Update ADDON_BUTTON_HEIGHT MAX_ADDONS_DISPLAYED SOUNDKIT
-
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
 local _G = _G
-local tconcat = table.concat
 
 local AddonList_Update = AddonList_Update
 local ADDON_BUTTON_HEIGHT = ADDON_BUTTON_HEIGHT
@@ -156,7 +149,6 @@ function addon:PLAYER_LOGIN()
 	local regions = {AddonListForceLoad:GetRegions()}
 	regions[1]:SetPoint("LEFT", AddonListForceLoad, "RIGHT", 2, 0)
 	regions[1]:SetText(L["Load out of date"])
-	regions = nil
 
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
@@ -654,7 +646,7 @@ do
 
 			local memory = owner.memory
 			if memory then
-				local text = ""
+				local text
 				if memory > 1000 then
 					memory = memory / 1000
 					text = L["Memory: %.02f MB"]:format(memory)
@@ -679,7 +671,7 @@ do
 					entry:Hide()
 				else
 					-- aaaaand copy from AddonList_Update
-					local name, title, notes, loadable, reason, security = C_AddOns.GetAddOnInfo(addonIndex)
+					local name, title, _, loadable, reason, security = C_AddOns.GetAddOnInfo(addonIndex)
 					local enabled = C_AddOns.GetAddOnEnableState(addonIndex, character) > 0
 
 					local checkbox = _G["AddonListEntry"..i.."Enabled"]
@@ -830,7 +822,7 @@ do
 		elseif oldText ~= searchString or next(filterList) then
 			wipe(searchList)
 			for i=1, C_AddOns.GetNumAddOns() do
-				local name, title, notes = C_AddOns.GetAddOnInfo(i)
+				local name, title = C_AddOns.GetAddOnInfo(i)
 				if (searchString == "" or (strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)))) and checkFilters(i) then
 					searchList[#searchList+1] = i
 				end

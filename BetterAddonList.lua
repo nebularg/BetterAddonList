@@ -1,21 +1,13 @@
--- luacheck: globals BetterAddonListDB SLASH_BETTERADDONLIST1 SLASH_BETTERADDONLIST2 SLASH_BETTERADDONLIST3 SlashCmdList SLASH_RELOADUI1 SLASH_RELOADUI2
--- luacheck: globals UIDropDownMenu_Initialize UIDropDownMenu_CreateInfo UIDropDownMenu_AddButton UIDropDownMenu_SetSelectedValue UIDROPDOWNMENU_MENU_VALUE
--- luacheck: globals SearchBoxTemplate_OnTextChanged IsAddonVersionCheckEnabled ResetAddOns CreateDataProvider CreateIndexRangeDataProvider
--- luacheck: globals AddonList AddonCharacterDropDown AddonCharacterDropDownButton AddonListForceLoad AddonListOkayButton
--- luacheck: globals AddonList_Enable AddonList_SetSecurityIcon AddonList_SetStatus AddonList_HasAnyChanged AddonTooltip_Update
--- luacheck: globals SOUNDKIT
--- luacheck: globals C_AddOns
-
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
 
-local LibDialog = LibStub("LibDialog-1.0")
+local LibDialog = LibStub("LibDialog-1.0n")
 
 local _G = _G
 local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 
 local L = ns.L
-L.LOAD_ADDON = GetLocale() == "ruRU" and "Загрузить" or _G.LOAD_ADDON
+L.LOAD_ADDON = GetLocale() == "ruRU" and "Загрузить" or LOAD_ADDON
 
 local UpdateList
 
@@ -158,7 +150,6 @@ function addon:PLAYER_LOGIN()
 	local regions = {AddonListForceLoad:GetRegions()}
 	regions[1]:SetPoint("LEFT", AddonListForceLoad, "RIGHT", 2, 0)
 	regions[1]:SetText(L["Load out of date"])
-	regions = nil
 
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
@@ -635,7 +626,7 @@ do
 
 			local memory = owner.memoryUsage
 			if memory then
-				local text = ""
+				local text
 				if memory > 1000 then
 					memory = memory / 1000
 					text = L["Memory: %.02f MB"]:format(memory)
@@ -779,7 +770,7 @@ do
 		if (searchString ~= "" and oldText ~= searchString) or next(filterList) then
 			local list = {}
 			for i=1, C_AddOns.GetNumAddOns() do
-				local name, title, notes = C_AddOns.GetAddOnInfo(i)
+				local name, title = C_AddOns.GetAddOnInfo(i)
 				if (searchString == "" or (strfind(name:lower(), searchString, nil, true) or (title and strfind(title:lower(), searchString, nil, true)))) and checkFilters(i) then
 					list[#list + 1] = i
 				end
