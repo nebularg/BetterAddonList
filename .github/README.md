@@ -12,7 +12,6 @@ BetterAddonList has the following enhancements:
 * Load AddOn button is always shown for unloaded load on demand addons.
 * See how much memory enabled addons are using.
 
-
 ## Slash Commands
 
 `/addons` - show the addon list, `/bal` and `/acp` can also be used  
@@ -28,4 +27,4 @@ Protected addons will never be disabled.
 
 <https://www.curseforge.com/wow/addons/betteraddonlist>
 
-<https://addons.wago.io/addons/loggerheadlite>
+<https://addons.wago.io/addons/betteraddonlist>
