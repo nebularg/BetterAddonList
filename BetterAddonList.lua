@@ -357,6 +357,8 @@ LibDialog:Register("BETTER_ADDONLIST_ERROR_NAME", {
 -- sets menu
 do
 	local CURRENT_SET = nil
+	local CURRENT_SET_CHUNK = 1
+	local CHUNK_SIZE = 40
 	local list = {}
 
 	local separator = {
@@ -506,20 +508,30 @@ do
 			UIDropDownMenu_AddButton(info, level)
 		elseif level == 3 then
 			if UIDROPDOWNMENU_MENU_VALUE == "view_set" then
+				info = UIDropDownMenu_CreateInfo()
 				info.text = L["Addon List"]
 				info.isTitle = 1
+				info.notCheckable = 1
 				UIDropDownMenu_AddButton(info, level)
 				info.isTitle = nil
 
 				sort(sets[CURRENT_SET], icmp)
-				for i, name in ipairs(sets[CURRENT_SET]) do
-					if i > 30 then
-						info.text = L["... and %d more"]:format(#sets[CURRENT_SET] - i)
+				local count = #sets[CURRENT_SET]
+				if count <= CHUNK_SIZE then
+					info.disabled = 1
+					info.hasArrow = nil
+					for i, name in ipairs(sets[CURRENT_SET]) do
+						info.text = name
 						UIDropDownMenu_AddButton(info, level)
-						break
 					end
-					info.text = name
-					UIDropDownMenu_AddButton(info, level)
+				else
+					info.disabled = nil
+					info.hasArrow = 1
+					for i = 1, count, CHUNK_SIZE do
+						info.text = ("%d - %d"):format(i, math.min(count, i + CHUNK_SIZE))
+						info.value = i
+						UIDropDownMenu_AddButton(info, level)
+					end
 				end
 			elseif UIDROPDOWNMENU_MENU_VALUE == "include_set" then
 				info.text = L["Include with another set"]
@@ -562,6 +574,24 @@ do
 				else
 					info.text = NONE
 					info.disabled = 1
+					UIDropDownMenu_AddButton(info, level)
+				end
+			end
+		elseif level == 4 then
+			CURRENT_SET_CHUNK = tonumber(UIDROPDOWNMENU_MENU_VALUE)
+			if CURRENT_SET_CHUNK then
+				info = UIDropDownMenu_CreateInfo()
+				info.text = L["Addon List"]
+				info.isTitle = 1
+				info.notCheckable = 1
+				UIDropDownMenu_AddButton(info, level)
+				info.isTitle = nil
+
+				sort(sets[CURRENT_SET], icmp)
+				for i = CURRENT_SET_CHUNK, CURRENT_SET_CHUNK + CHUNK_SIZE do
+					local name = sets[CURRENT_SET][i]
+					if not name then break end
+					info.text = name
 					UIDropDownMenu_AddButton(info, level)
 				end
 			end
