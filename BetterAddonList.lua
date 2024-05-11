@@ -691,7 +691,7 @@ do
 		local iconTexture = GetAddOnMetadata(addonIndex, "IconTexture")
 		local iconAtlas = GetAddOnMetadata(addonIndex, "IconAtlas")
 		if not iconTexture and not iconAtlas then
-			title:SetText(title:GetText():gsub([[^|TInterface\ICONS\INV_Misc_QuestionMark:20:20|t ]], "")) -- "|T982414:20:20|t" ..
+			title:SetText(title:GetText():gsub([[^|TInterface\ICONS\INV_Misc_QuestionMark:20:20:0:0|t ]], "")) -- "|T982414:20:20|t" ..
 		end
 
 		local lockIcon = entry.Protected
