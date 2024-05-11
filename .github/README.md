@@ -18,6 +18,8 @@ BetterAddonList has the following enhancements:
 `/addons load [set]` - enable only the addons in a set, other addons are disabled  
 `/addons enable [set]` - enable addons in a set  
 `/addons disable [set]` - disable addons in a set  
+`/addons save [set]` - save all enabled addons to a set  
+`/addons delete [set]` - delete a set  
 `/addons disableall` - disable all addons  
 `/addons reset` - Reset addons to what was enabled at login  
 

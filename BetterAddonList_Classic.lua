@@ -202,6 +202,16 @@ function addon:PLAYER_LOGIN()
 			else
 				self:Print(L["No set named %q."]:format(rest))
 			end
+		elseif command == "save" then
+			self:SaveSet(rest)
+			self:Print(L["Saved enabled addons to set %q."]:format(rest))
+		elseif command == "delete" then
+			if sets[rest] then
+				self:DeleteSet(rest)
+				self:Print(L["Deleted set %q."]:format(rest))
+			else
+				self:Print(L["No set named %q."]:format(rest))
+			end
 		elseif command == "disableall" then
 			C_AddOns.DisableAllAddOns(character)
 			_G.AddonList_Update()
