@@ -24,7 +24,9 @@ globals = {
 	"C_Timer",
 	"CloseDropDownMenus",
 	"CopyTable",
+	"CreateAtlasMarkup",
 	"CreateFrame",
+	"CreateSimpleTextureMarkup",
 	"GameTooltip",
 	"GetAddOnMemoryUsage",
 	"GetLocale",
@@ -45,7 +47,6 @@ globals = {
 	"UIDropDownMenu_SetSelectedValue",
 	"UnitName",
 	"UpdateAddOnMemoryUsage",
-
 	"tContains",
 	"tostringall",
 	"sort",
@@ -62,9 +63,11 @@ globals = {
 files["BetterAddonList.lua"].globals = {
 	"LibStub",
 	"AddonList_HasAnyChanged",
+	"AddonListDisableAllButton",
 	"AddonListOkayButton",
 	"CreateDataProvider",
 	"CreateIndexRangeDataProvider",
+	"GameTooltip_Hide",
 	"SearchBoxTemplate_OnTextChanged",
 }
 files["BetterAddonList_Classic.lua"].globals = {

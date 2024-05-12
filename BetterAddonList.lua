@@ -152,6 +152,48 @@ function addon:PLAYER_LOGIN()
 	regions[1]:SetPoint("LEFT", AddonListForceLoad, "RIGHT", 2, 0)
 	regions[1]:SetText(L["Load out of date"])
 
+	-- add some option buttons
+	local hideIcons = CreateFrame("Button", "BetterAddonListOptionHideIcons", AddonList)
+	hideIcons:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
+	hideIcons:SetNormalTexture(134400) -- inv_misc_questionmark
+	hideIcons:SetHighlightTexture(134400)
+	hideIcons:SetSize(20, 20)
+	hideIcons:SetPoint("LEFT", AddonListDisableAllButton, "RIGHT", 25, -1)
+	hideIcons:SetScript("OnClick", function(this)
+		-- cycle through
+		if BetterAddonListDB.hide_icons == false then
+			BetterAddonListDB.hide_icons = true -- true = hide
+		elseif BetterAddonListDB.hide_icons == true then
+			BetterAddonListDB.hide_icons = nil -- nil = nodefault
+		elseif BetterAddonListDB.hide_icons == nil then
+			BetterAddonListDB.hide_icons = false --- false = show all
+		end
+		UpdateList()
+	end)
+	hideIcons:SetScript("OnEnter", function(this)
+		GameTooltip:SetOwner(this, "ANCHOR_TOPLEFT")
+		GameTooltip:SetText(L["Toggle Icons"])
+		GameTooltip:Show()
+	end)
+	hideIcons:SetScript("OnLeave", GameTooltip_Hide)
+
+	local hideMemory = CreateFrame("Button", "BetterAddonListOptionHideIcons", AddonList)
+	hideMemory:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
+	hideMemory:SetNormalTexture(4555550) -- inv_10_jewelcrafting_gem1leveling_cut_green
+	hideMemory:SetHighlightTexture(4555550)
+	hideMemory:SetSize(20, 20)
+	hideMemory:SetPoint("LEFT", hideIcons, "RIGHT", 2, 0)
+	hideMemory:SetScript("OnClick", function(this)
+		BetterAddonListDB.hide_memory = not BetterAddonListDB.hide_memory or nil
+		UpdateList()
+	end)
+	hideMemory:SetScript("OnEnter", function(this)
+		GameTooltip:SetOwner(this, "ANCHOR_TOPLEFT")
+		GameTooltip:SetText(L["Toggle Memory Usage"])
+		GameTooltip:Show()
+	end)
+	hideMemory:SetScript("OnLeave", GameTooltip_Hide)
+
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
 
@@ -689,10 +731,28 @@ do
 		local title = entry.Title
 		local status = entry.Status
 
-		local iconTexture = GetAddOnMetadata(addonIndex, "IconTexture")
-		local iconAtlas = GetAddOnMetadata(addonIndex, "IconAtlas")
-		if not iconTexture and not iconAtlas then
-			title:SetText(title:GetText():gsub([[^|TInterface\ICONS\INV_Misc_QuestionMark:20:20:0:0|t ]], "")) -- "|T982414:20:20|t" ..
+		if BetterAddonListDB.hide_icons ~= false then -- false = show all
+			local titleIcon
+			local iconTexture = GetAddOnMetadata(addonIndex, "IconTexture")
+			local iconAtlas = GetAddOnMetadata(addonIndex, "IconAtlas")
+			if not iconTexture and not iconAtlas and BetterAddonListDB.hide_icons == nil then -- nil = nodefault
+				titleIcon = CreateSimpleTextureMarkup("Interface\\ICONS\\INV_Misc_QuestionMark", 20, 20)
+			elseif BetterAddonListDB.hide_icons then -- true = hide
+				if iconTexture then
+					titleIcon = CreateSimpleTextureMarkup(iconTexture, 20, 20)
+				elseif iconAtlas then
+					titleIcon = CreateAtlasMarkup(iconAtlas, 20, 20)
+				else
+					titleIcon = CreateSimpleTextureMarkup("Interface\\ICONS\\INV_Misc_QuestionMark", 20, 20)
+				end
+			end
+			if titleIcon then
+				local name = title:GetText()
+				local _, start = name:find(titleIcon, nil, true)
+				if start then
+					title:SetText(name:sub(start + 2))
+				end
+			end
 		end
 
 		local lockIcon = entry.Protected
@@ -734,23 +794,28 @@ do
 				AddonList_SetStatus(entry, true, false, false)
 			end
 
-			local memory = GetAddOnMemoryUsage(addonIndex)
-			entry.memoryUsage = memory
-			local usage = memory / 8000 -- just needed some baseline
-			if usage > 0.8 then
-				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
-			elseif usage > 0.6 then
-				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
-			elseif usage > 0.4 then
-				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
-			elseif usage > 0.2 then
-				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
-			elseif usage > 0.1 then
-				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
+			if not BetterAddonListDB.hide_memory then
+				local memory = GetAddOnMemoryUsage(addonIndex)
+				entry.memoryUsage = memory
+				local usage = memory / 8000 -- just needed some baseline
+				if usage > 0.8 then
+					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
+				elseif usage > 0.6 then
+					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
+				elseif usage > 0.4 then
+					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
+				elseif usage > 0.2 then
+					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
+				elseif usage > 0.1 then
+					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
+				else
+					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+				end
+				memIcon:Show()
 			else
-				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+				entry.memoryUsage = nil
+				memIcon:Hide()
 			end
-			memIcon:Show()
 		else
 			entry.memoryUsage = nil
 			memIcon:Hide()

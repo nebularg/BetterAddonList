@@ -48,5 +48,7 @@ L["Save the currently selected addons to %s?"] = true
 L["Saved enabled addons to set %q."] = true
 L["Sets"] = true
 L["There is already a set named \"%s\".\nPlease choose another name."] = true
+L["Toggle Icons"] = true
+L["Toggle Memory Usage"] = true
 L["View (%d)"] = true
 
