@@ -145,7 +145,8 @@ function addon:PLAYER_LOGIN()
 
 	-- move and resize the "Load out of date addons" check box
 	AddonListForceLoad:ClearAllPoints()
-	AddonListForceLoad:SetPoint("TOPLEFT", AddonList, 2, 1)
+	AddonListForceLoad:SetPoint("TOPLEFT", AddonList, 4, 0)
+	AddonListForceLoad:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
 	AddonListForceLoad:SetSize(24, 24)
 	local regions = {AddonListForceLoad:GetRegions()}
 	regions[1]:SetPoint("LEFT", AddonListForceLoad, "RIGHT", 2, 0)
