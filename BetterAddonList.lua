@@ -197,12 +197,12 @@ function addon:PLAYER_LOGIN()
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
 
-	if AddonCharacterDropDownButton then
+	if AddonCharacterDropDown then
 		-- default to showing the player profile
 		-- UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
 		-- XXX try to avoid taint by doing this directly
-		AddonCharacterDropDownButton.selectedValue = character
-		AddonCharacterDropDownButton.Text:SetText(character)
+		AddonCharacterDropDown.selectedValue = character
+		AddonCharacterDropDown.Text:SetText(character)
 	end
 
 	SLASH_BETTERADDONLIST1 = "/addons"
