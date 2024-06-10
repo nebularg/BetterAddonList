@@ -197,11 +197,13 @@ function addon:PLAYER_LOGIN()
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
 
-	-- default to showing the player profile
-	-- UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
-	-- XXX try to avoid taint by doing this directly
-	AddonCharacterDropDown.selectedValue = character
-	AddonCharacterDropDown.Text:SetText(character)
+	if AddonCharacterDropDownButton then
+		-- default to showing the player profile
+		-- UIDropDownMenu_SetSelectedValue(AddonCharacterDropDown, character)
+		-- XXX try to avoid taint by doing this directly
+		AddonCharacterDropDownButton.selectedValue = character
+		AddonCharacterDropDownButton.Text:SetText(character)
+	end
 
 	SLASH_BETTERADDONLIST1 = "/addons"
 	SLASH_BETTERADDONLIST2 = "/acp" -- muscle memory ;[
@@ -654,7 +656,7 @@ do
 	UIDropDownMenu_Initialize(dropdown, menu, "MENU")
 
 	local button = CreateFrame("Button", "BetterAddonListSetsButton", AddonList, "UIPanelButtonTemplate")
-	button:SetPoint("LEFT", AddonCharacterDropDownButton, "RIGHT", 3, 0)
+	button:SetPoint("LEFT", AddonCharacterDropDownButton or AddonList.Dropdown, "RIGHT", 3, 0)
 	button:SetSize(80, 22)
 	button:SetText(L["Sets"])
 	button:SetScript("OnClick", function(self)
@@ -914,7 +916,23 @@ do
 		end
 	end)
 
+	if MenuUtil then -- 11.0 menu system
+		AddonList:HookScript("OnShow", function()
+			-- default to showing the player profile
+			local dropdown = AddonList.Dropdown
+			local rootDescription = dropdown:GetMenuDescription()
+			MenuUtil.TraverseMenu(rootDescription, function(description)
+				if MenuUtil.GetElementText(description) == character and not description:IsSelected() then
+					description:Pick(1) -- MenuInputContext.None
+					dropdown:GenerateMenu()
+					return
+				end
+			end)
+		end)
+	end
+
 	AddonList:HookScript("OnHide", function(self)
+		-- reset search box
 		wipe(self.filterList)
 		self.SearchBox:SetText("")
 		OnTextChanged(self.SearchBox)

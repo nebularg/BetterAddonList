@@ -68,6 +68,8 @@ files["BetterAddonList.lua"].globals = {
 	"CreateDataProvider",
 	"CreateIndexRangeDataProvider",
 	"GameTooltip_Hide",
+	"Menu",
+	"MenuUtil",
 	"SearchBoxTemplate_OnTextChanged",
 }
 files["BetterAddonList_Classic.lua"].globals = {
