@@ -614,7 +614,7 @@ do
 	UIDropDownMenu_Initialize(dropdown, menu, "MENU")
 
 	local button = CreateFrame("Button", "BetterAddonListSetsButton", AddonList, "UIPanelButtonTemplate")
-	button:SetPoint("LEFT", AddonCharacterDropDownButton, "RIGHT", 3, 0)
+	button:SetPoint("LEFT", AddonList.Dropdown, "RIGHT", 3, 0)
 	button:SetSize(80, 22)
 	button:SetText(L["Sets"])
 	button:SetScript("OnClick", function(self)
