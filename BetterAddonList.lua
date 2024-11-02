@@ -130,12 +130,6 @@ function addon:ADDON_LOADED(addon_name)
 	end
 end
 
-local function setPlayerDropdown(dropdown)
-	local _, nextSelection = dropdown:CollectSelectionData()
-	dropdown:Pick(nextSelection, 2)
-	_G.AddonList_Update()
-end
-
 function addon:PLAYER_LOGIN()
 	-- make the panel movable
 	local mover = CreateFrame("Frame", "BetterAddonListMover", AddonList)
@@ -202,14 +196,6 @@ function addon:PLAYER_LOGIN()
 
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
-
-	-- default to showing the player profile
-	hooksecurefunc(AddonList.Dropdown, "OnMenuAssigned", function(dropdown)
-		-- only set the player the first time the menu is shown, probably a better way to do this
-		if not setPlayerDropdown then return end
-		setPlayerDropdown(dropdown)
-		setPlayerDropdown = nil
-	end)
 
 	SLASH_BETTERADDONLIST1 = "/addons"
 	SLASH_BETTERADDONLIST2 = "/acp" -- muscle memory ;[
@@ -921,21 +907,6 @@ do
 			AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
 		end
 	end)
-
-	if MenuUtil then -- 11.0 menu system
-		AddonList:HookScript("OnShow", function()
-			-- default to showing the player profile
-			local dropdown = AddonList.Dropdown
-			local rootDescription = dropdown:GetMenuDescription()
-			MenuUtil.TraverseMenu(rootDescription, function(description)
-				if MenuUtil.GetElementText(description) == character and not description:IsSelected() then
-					description:Pick(1) -- MenuInputContext.None
-					dropdown:GenerateMenu()
-					return
-				end
-			end)
-		end)
-	end
 
 	AddonList:HookScript("OnHide", function(self)
 		-- reset search box

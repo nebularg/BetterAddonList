@@ -129,12 +129,6 @@ function addon:ADDON_LOADED(addon_name)
 	end
 end
 
-local function setPlayerDropdown(dropdown)
-	local _, nextSelection = dropdown:CollectSelectionData()
-	dropdown:Pick(nextSelection, 2)
-	_G.AddonList_Update()
-end
-
 function addon:PLAYER_LOGIN()
 	-- make the panel movable
 	local mover = CreateFrame("Frame", "BetterAddonListMover", AddonList)
@@ -160,11 +154,11 @@ function addon:PLAYER_LOGIN()
 	--UIPanelWindows["AddonList"].area = nil
 
 	-- default to showing the player profile
-	hooksecurefunc(AddonList.Dropdown, "OnMenuAssigned", function(dropdown)
-		-- only set the player the first time the menu is shown, probably a better way to do this
-		if not setPlayerDropdown then return end
-		setPlayerDropdown(dropdown)
-		setPlayerDropdown = nil
+	AddonList:HookScript("OnShow", function()
+		local dropdown = AddonList.Dropdown
+		local _, nextSelection = dropdown:CollectSelectionData()
+		dropdown:Pick(nextSelection, 1) -- MenuInputContext.None
+		_G.AddonList_Update()
 	end)
 
 	-- fix the "Load AddOn" text overflowing for some locales
