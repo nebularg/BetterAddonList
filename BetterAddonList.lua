@@ -14,6 +14,7 @@ local UpdateList
 local sets = nil
 local included = nil
 local character = nil
+local playerGUID = UnitGUID("player")
 
 local function IsAddonProtected(index)
 	if not index then return end
@@ -79,9 +80,9 @@ function addon:ADDON_LOADED(addon_name)
 	-- installed (regardless of enable setting) and the character has logged out normally.
 	for i = 1, C_AddOns.GetNumAddOns() do
 		if C_AddOns.GetAddOnEnableState(i, character) > 0 then
-			C_AddOns.EnableAddOn(i, character)
+			C_AddOns.EnableAddOn(i, playerGUID)
 		else
-			C_AddOns.DisableAddOn(i, character)
+			C_AddOns.DisableAddOn(i, playerGUID)
 		end
 	end
 
@@ -245,7 +246,7 @@ function addon:PLAYER_LOGIN()
 				self:Print(L["No set named %q."]:format(rest))
 			end
 		elseif command == "disableall" then
-			C_AddOns.DisableAllAddOns(character)
+			C_AddOns.DisableAllAddOns(playerGUID)
 			UpdateList()
 			self:Print(L["Disabled all addons."])
 		elseif command == "reset" then
@@ -995,7 +996,7 @@ function addon:EnableProtected()
 end
 
 function addon:LoadSet(name)
-	C_AddOns.DisableAllAddOns(character)
+	C_AddOns.DisableAllAddOns(playerGUID)
 	self:EnableSet(name)
 end
 
@@ -1005,7 +1006,7 @@ function addon:EnableSet(name, done)
 		for i=1, C_AddOns.GetNumAddOns() do
 			local addon_name = C_AddOns.GetAddOnInfo(i)
 			if tContains(set, addon_name) then
-				C_AddOns.EnableAddOn(i, character)
+				C_AddOns.EnableAddOn(i, playerGUID)
 			end
 		end
 	end
@@ -1027,7 +1028,7 @@ function addon:DisableSet(name)
 		for i=1, C_AddOns.GetNumAddOns() do
 			local addon_name = C_AddOns.GetAddOnInfo(i)
 			if not IsAddonProtected(i) and tContains(set, addon_name) then
-				C_AddOns.DisableAddOn(i, character)
+				C_AddOns.DisableAddOn(i, playerGUID)
 			end
 		end
 	end

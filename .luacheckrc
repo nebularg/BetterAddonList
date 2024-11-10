@@ -45,6 +45,7 @@ globals = {
 	"UIDropDownMenu_Initialize",
 	"UIDROPDOWNMENU_MENU_VALUE",
 	"UIDropDownMenu_SetSelectedValue",
+	"UnitGUID",
 	"UnitName",
 	"UpdateAddOnMemoryUsage",
 	"tContains",
