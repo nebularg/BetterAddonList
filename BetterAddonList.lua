@@ -76,13 +76,23 @@ function addon:ADDON_LOADED(addon_name)
 	-- Note the fix applies to each character the first time it loads there, and a given character
 	-- is not protected from the faulty logic on addon X until after the fix has run with addon X
 	-- installed (regardless of enable setting) and the character has logged out normally.
+
+	-- XXX Using this to fix some enabled state stuff: startStatus and outOfDate
+	local hasOutOfDate = false
 	for i = 1, C_AddOns.GetNumAddOns() do
-		if C_AddOns.GetAddOnEnableState(i, character) > 0 then
+		local _, _, _, loadable, reason = C_AddOns.GetAddOnInfo(i)
+		local enabled = C_AddOns.GetAddOnEnableState(i, character) > 0
+		if enabled and not loadable and reason == "INTERFACE_VERSION" then
+			hasOutOfDate = true
+		end
+		AddonList.startStatus[i] = enabled
+		if enabled then
 			C_AddOns.EnableAddOn(i, character)
 		else
 			C_AddOns.DisableAddOn(i, character)
 		end
 	end
+	AddonList.outOfDate = C_AddOns.IsAddonVersionCheckEnabled() and hasOutOfDate
 
 	hooksecurefunc(C_AddOns, "DisableAllAddOns", function()
 		self:EnableProtected()
@@ -777,6 +787,35 @@ do
 		load:SetWidth(#L.LOAD_ADDON > 12 and 120 or 100)
 
 		local enabled = C_AddOns.GetAddOnEnableState(addonIndex, character) > 0
+
+		-- XXX Handle enabled state stuff until Blizzard fixes their GetAddOnEnableState usage
+		local loadable, reason = C_AddOns.IsAddOnLoadable(addonIndex, character)
+		if loadable or (enabled and (reason == "DEP_DEMAND_LOADED" or reason == "DEMAND_LOADED")) then
+			title:SetTextColor(1.0, 0.78, 0.0)
+		elseif enabled and reason ~= "DEP_DISABLED" then
+			title:SetTextColor(1.0, 0.1, 0.1)
+		else
+			title:SetTextColor(0.5, 0.5, 0.5)
+		end
+		if enabled ~= AddonList.startStatus[addonIndex] and reason ~= "DEP_DISABLED" or
+			(reason ~= "INTERFACE_VERSION" and tContains(AddonList.outOfDateIndexes, addonIndex)) or
+			(reason == "INTERFACE_VERSION" and not tContains(AddonList.outOfDateIndexes, addonIndex))
+		then
+			if enabled then
+				-- special case for loadable on demand addons
+				if AddonList_IsAddOnLoadOnDemand(addonIndex) then
+					AddonList_SetStatus(entry, true, false, false)
+				else
+					AddonList_SetStatus(entry, false, false, true)
+				end
+			else
+				AddonList_SetStatus(entry, false, false, true)
+			end
+		else
+			AddonList_SetStatus(entry, false, true, false)
+		end
+		-- XXX
+
 		if enabled then
 			local depsEnabled = CheckAddonDependencies(C_AddOns.GetAddOnDependencies(addonIndex))
 			if not depsEnabled then
@@ -885,6 +924,30 @@ do
 		UpdateList()
 	end
 
+	-- XXX Blizzard uses guid for EnableAddOn/DisableAddOn, but name for GetAddOnEnableState.
+	-- This apparently isn't mapped to the same state table internally so the addon list via
+	-- AddonList_HasAnyChanged doesn't update and show the reload button properly?
+	local function HasAnyChanged()
+		local checkIfOutOfDate = false
+		if AddonList.outOfDate and not C_AddOns.IsAddonVersionCheckEnabled() then
+			return true
+		elseif not AddonList.outOfDate and C_AddOns.IsAddonVersionCheckEnabled() then
+			checkIfOutOfDate = true
+		end
+
+		for i = 1, C_AddOns.GetNumAddOns() do
+			local enabled = C_AddOns.GetAddOnEnableState(i, character) > 0
+			local _, _, _, loadable, reason = C_AddOns.GetAddOnInfo(i)
+			if checkIfOutOfDate and enabled and not loadable and reason == "INTERFACE_VERSION" then
+				return true
+			end
+			if enabled ~= AddonList.startStatus[i] and reason ~= "DEP_DISABLED" then
+				return true
+			end
+		end
+		return false
+	end
+
 	function UpdateList()
 		if not AddonList.searchList:IsEmpty() then
 			AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
@@ -892,7 +955,7 @@ do
 			AddonList.ScrollBox:SetDataProvider(fullList, true)
 		end
 
-		if AddonList_HasAnyChanged() then
+		if HasAnyChanged() then
 			AddonListOkayButton:SetText(_G.RELOADUI)
 			AddonList.shouldReload = true
 		else
@@ -904,6 +967,14 @@ do
 	hooksecurefunc("AddonList_Update", function()
 		if not AddonList.searchList:IsEmpty() then
 			AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
+		end
+
+		if HasAnyChanged() then
+			AddonListOkayButton:SetText(_G.RELOADUI)
+			AddonList.shouldReload = true
+		else
+			AddonListOkayButton:SetText(_G.OKAY)
+			AddonList.shouldReload = false
 		end
 	end)
 
