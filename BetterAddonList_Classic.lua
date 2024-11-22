@@ -363,27 +363,6 @@ StaticPopupDialogs["BETTER_ADDONLIST_ERROR_NAME"] = {
 
 -- sets menu
 do
-	local CURRENT_SET = nil
-	local CURRENT_SET_CHUNK = 1
-	local CHUNK_SIZE = 40
-	local list = {}
-
-	local separator = {
-		isTitle = true,
-		notCheckable = 1,
-		icon = "Interface\\Common\\UI-TooltipDivider-Transparent",
-		iconInfo = {
-			tCoordLeft = 0,
-			tCoordRight = 1,
-			tCoordTop = 0,
-			tCoordBottom = 1,
-			tSizeX = 0,
-			tFitDropDownSizeX = true,
-			tSizeY = 8,
-		},
-		iconOnly = true,
-	}
-
 	-- pseudo natural sorting
 	local function pad(s)
 		local n = tonumber(s)
@@ -399,221 +378,116 @@ do
 		return a:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") < b:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") -- =~ s/(\|c[a-fA-F0-9]{8}|\|r)//g
 	end
 
-	local function menu(self, level)
-		if not level then return end
-
-		local info = UIDropDownMenu_CreateInfo()
-		info.notCheckable = 1
-
-		if level == 1 then
-			if next(sets) then
-				wipe(list)
-				for name in next, sets do
-					list[#list+1] = name
-				end
-				sort(list, natsort)
-
-				info.hasArrow = 1
-				for _, name in ipairs(list) do
-					info.text = name
-					info.value = name
-					UIDropDownMenu_AddButton(info, level)
-				end
-
-				UIDropDownMenu_AddButton(separator, level)
-			end
-
-			info = UIDropDownMenu_CreateInfo()
-			info.notCheckable = 1
-
-			info.text = L["Create new set"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_NEWSET") end
-			UIDropDownMenu_AddButton(info, level)
-
-			info.text = L["Reset"]
-			info.func = function()
-				C_AddOns.ResetAddOns()
-				_G.AddonList_Update()
-			end
-			info.tooltipTitle = info.text
-			info.tooltipText = L["Reset addons to what was enabled at login."]
-			info.tooltipOnButton = 1
-			UIDropDownMenu_AddButton(info, level)
-
-		elseif level == 2 then
-			CURRENT_SET = UIDROPDOWNMENU_MENU_VALUE
-
-			info.text = CURRENT_SET
-			info.isTitle = 1
-			UIDropDownMenu_AddButton(info, level)
-
-			info = UIDropDownMenu_CreateInfo()
-			info.text = L["View (%d)"]:format(#sets[CURRENT_SET])
-			info.value = "view_set"
-			info.func = nil
-			info.hasArrow = 1
-			info.notCheckable = 1
-			info.disabled = #sets[CURRENT_SET] == 0 and 1 or nil
-			UIDropDownMenu_AddButton(info, level)
-
-			UIDropDownMenu_AddButton(separator, level)
-
-			info = UIDropDownMenu_CreateInfo()
-			info.text = L["Load"]
-			info.func = function()
-				addon:LoadSet(CURRENT_SET)
-				CloseDropDownMenus(1)
-			end
-			info.tooltipTitle = info.text
-			info.tooltipText = L["Disable all addons then enable addons in this set."]
-			info.tooltipOnButton = 1
-			info.notCheckable = 1
-			UIDropDownMenu_AddButton(info, level)
-			info.tooltipTitle = nil
-			info.tooltipText = nil
-
-			info.text = L["Save"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_SAVESET", CURRENT_SET, nil, CURRENT_SET) end
-			UIDropDownMenu_AddButton(info, level)
-
-			info.text = L["Rename"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_RENAMESET", CURRENT_SET, nil, CURRENT_SET) end
-			UIDropDownMenu_AddButton(info, level)
-
-			info.text = L["Delete"]
-			info.func = function() StaticPopup_Show("BETTER_ADDONLIST_DELETESET", CURRENT_SET, nil, CURRENT_SET) end
-			UIDropDownMenu_AddButton(info, level)
-
-			UIDropDownMenu_AddButton(separator, level)
-
-			info.text = L["Include with another set"]
-			info.value = "include_set"
-			info.func = nil
-			info.hasArrow = 1
-			info.disabled = (#list < 3) and 1 or nil -- have more than the current set and default
-			UIDropDownMenu_AddButton(info, level)
-
-			info.text = L["Remove an included set"]
-			info.value = "remove_set"
-			info.func = nil
-			info.hasArrow = 1
-			info.disabled = not included[CURRENT_SET] or not next(included[CURRENT_SET])
-			UIDropDownMenu_AddButton(info, level)
-
-			UIDropDownMenu_AddButton(separator, level)
-
-			info = UIDropDownMenu_CreateInfo()
-			info.notCheckable = 1
-			info.disabled = #sets[CURRENT_SET] == 0 and 1 or nil
-
-			info.text = L["Enable addons from this set"]
-			info.func = function() addon:EnableSet(CURRENT_SET) end
-			UIDropDownMenu_AddButton(info, level)
-
-			info.text = L["Disable addons from this set"]
-			info.func = function() addon:DisableSet(CURRENT_SET) end
-			UIDropDownMenu_AddButton(info, level)
-		elseif level == 3 then
-			if UIDROPDOWNMENU_MENU_VALUE == "view_set" then
-				info = UIDropDownMenu_CreateInfo()
-				info.text = L["Addon List"]
-				info.isTitle = 1
-				info.notCheckable = 1
-				UIDropDownMenu_AddButton(info, level)
-				info.isTitle = nil
-
-				sort(sets[CURRENT_SET], icmp)
-				local count = #sets[CURRENT_SET]
-				if count <= CHUNK_SIZE then
-					info.disabled = 1
-					info.hasArrow = nil
-					for i, name in ipairs(sets[CURRENT_SET]) do
-						info.text = name
-						UIDropDownMenu_AddButton(info, level)
-					end
-				else
-					info.disabled = nil
-					info.hasArrow = 1
-					for i = 1, count, CHUNK_SIZE do
-						info.text = ("%d - %d"):format(i, math.min(count, i + CHUNK_SIZE))
-						info.value = i
-						UIDropDownMenu_AddButton(info, level)
-					end
-				end
-			elseif UIDROPDOWNMENU_MENU_VALUE == "include_set" then
-				info.text = L["Include with another set"]
-				info.isTitle = 1
-				UIDropDownMenu_AddButton(info, level)
-				info.isTitle = nil
-				info.disabled = nil
-				info.notCheckable = nil
-				info.isNotRadio = 1
-				info.keepShownOnClick = 1
-
-				for i, name in ipairs(list) do
-					if name ~= CURRENT_SET then
-						info.text = name
-						info.checked = included[name] and included[name][CURRENT_SET] and 1 or nil
-						info.func = function(_, _, _, checked)
-							if not included[name] then
-								included[name] = {}
-							end
-							included[name][CURRENT_SET] = checked or nil
-						end
-						UIDropDownMenu_AddButton(info, level)
-					end
-				end
-			elseif UIDROPDOWNMENU_MENU_VALUE == "remove_set" then
-				info.text = L["Remove an included set"]
-				info.isTitle = 1
-				UIDropDownMenu_AddButton(info, level)
-				info.isTitle = nil
-				info.disabled = nil
-				info.notCheckable = 1
-				info.isNotRadio = 1
-
-				if included[CURRENT_SET] and next(included[CURRENT_SET]) then
-					for name in next, included[CURRENT_SET] do
-						info.text = name
-						info.func = function() included[CURRENT_SET][name] = nil end
-						UIDropDownMenu_AddButton(info, level)
-					end
-				else
-					info.text = NONE
-					info.disabled = 1
-					UIDropDownMenu_AddButton(info, level)
-				end
-			end
-		elseif level == 4 then
-			CURRENT_SET_CHUNK = tonumber(UIDROPDOWNMENU_MENU_VALUE)
-			if CURRENT_SET_CHUNK then
-				info = UIDropDownMenu_CreateInfo()
-				info.text = L["Addon List"]
-				info.isTitle = 1
-				info.notCheckable = 1
-				UIDropDownMenu_AddButton(info, level)
-				info.isTitle = nil
-
-				sort(sets[CURRENT_SET], icmp)
-				for i = CURRENT_SET_CHUNK, CURRENT_SET_CHUNK + CHUNK_SIZE do
-					local name = sets[CURRENT_SET][i]
-					if not name then break end
-					info.text = name
-					UIDropDownMenu_AddButton(info, level)
-				end
-			end
-		end
+	local function IsSetIncluded(data)
+		local name, setName = data[1], data[2]
+		return included[name] and included[name][setName] and true
 	end
-	local dropdown = CreateFrame("Frame", "BetterAddonListSetsDropDown", AddonList, "UIDropDownMenuTemplate")
-	UIDropDownMenu_Initialize(dropdown, menu, "MENU")
+
+	local function SetSetIncluded(data, _, menu)
+		local value = not IsSetIncluded(data)
+		local name, setName = data[1], data[2]
+		if not included[name] then
+			included[name] = {}
+		end
+		included[name][setName] = value or nil
+	end
+
+	local function RemoveIncludedSet(data)
+		local name, setName = data[1], data[2]
+		included[setName][name] = nil
+
+		return MenuResponse.Refresh
+	end
+
+	local function GenerateSetsMenu(owner, root)
+		if next(sets) then
+			local list = {}
+			for name in next, sets do
+				list[#list + 1] = name
+			end
+			sort(list, natsort)
+
+			for _, currentSet in ipairs(list) do
+				local set = root:CreateButton(currentSet)
+				set:CreateTitle(currentSet)
+
+				local count = #sets[currentSet]
+				local view = set:CreateButton(L["View (%d)"]:format(count))
+				view:SetEnabled(count > 0)
+				if count > 0 then
+					view:SetScrollMode(50 * 8)
+					view:CreateTitle(L["Addon List"])
+					sort(sets[currentSet], icmp)
+					for _, addonName in ipairs(sets[currentSet]) do
+						view:CreateButton(addonName):SetEnabled(false)
+					end
+				end
+
+				set:CreateDivider()
+
+				set:CreateButton(L["Load"], function(data) addon:LoadSet(data) end, currentSet):SetTooltip(function(tooltip)
+					tooltip:SetText(L["Load"], 1.0, 1.0, 1.0, 1.0, true)
+					tooltip:AddLine(L["Disable all addons then enable addons in this set."], 1.0, 0.82, 0.0, true)
+				end)
+				set:CreateButton(L["Save"], function(data) StaticPopup_Show("BETTER_ADDONLIST_SAVESET", data) end, currentSet)
+				set:CreateButton(L["Rename"], function(data) StaticPopup_Show("BETTER_ADDONLIST_RENAMESET", data) end, currentSet)
+				set:CreateButton(L["Delete"], function(data) StaticPopup_Show("BETTER_ADDONLIST_DELETESET", data) end, currentSet)
+
+				set:CreateDivider()
+
+				local includeSet = set:CreateButton(L["Include with another set"])
+				includeSet:SetEnabled(#list > 2) -- have more than the current set and default
+				includeSet:CreateTitle(L["Include with another set"])
+				for _, name in ipairs(list) do
+					if name ~= currentSet then
+						includeSet:CreateCheckbox(name, IsSetIncluded, SetSetIncluded, {name, currentSet})
+					end
+				end
+
+				local removeIncludedSet = set:CreateButton(L["Remove an included set"])
+				removeIncludedSet:SetEnabled(included[currentSet] and next(included[currentSet]) and true)
+				removeIncludedSet:CreateTitle(L["Remove an included set"])
+				if included[currentSet] and next(included[currentSet]) then
+					for name in next, included[currentSet] do
+						removeIncludedSet:CreateButton(name, RemoveIncludedSet, {name, currentSet})
+					end
+				else
+					removeIncludedSet:CreateButton(NONE):SetEnabled(false)
+				end
+
+				set:CreateDivider()
+
+				set:CreateButton(L["Enable addons from this set"], function(data) addon:EnableSet(data) end, currentSet)
+				set:CreateButton(L["Disable addons from this set"], function(data) addon:DisableSet(data) end, currentSet)
+			end
+
+			root:CreateDivider()
+		end
+
+		root:CreateButton(L["Create new set"], function() StaticPopup_Show("BETTER_ADDONLIST_NEWSET") end)
+		root:CreateButton(L["Reset"], function()
+			C_AddOns.ResetAddOns()
+			_G.AddonList_Update()
+		end)
+	end
 
 	local button = CreateFrame("Button", "BetterAddonListSetsButton", AddonList, "UIPanelButtonTemplate")
 	button:SetPoint("LEFT", AddonList.Dropdown, "RIGHT", 3, 0)
 	button:SetSize(80, 22)
 	button:SetText(L["Sets"])
-	button:SetScript("OnClick", function(self)
-		ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 0, 0)
-	end)
+	-- button:SetScript("OnClick", function(self)
+	-- 	MenuUtil.CreateContextMenu(self, GenerateSetsMenu)
+	-- end)
+
+	-- because I want the old ToggleDropDownMenu behaviour with a context menu x.x
+	_G.Mixin(button, _G.DropdownButtonMixin)
+	button.menuRelativePoint = "BOTTOMLEFT"
+	button.menuPointX = 6
+	button.menuPointY = 2
+	button.menuGenerator = GenerateSetsMenu
+	button:OnLoad_Intrinsic()
+	button:SetScript("OnMouseDown", button.OnMouseDown_Intrinsic)
+	-- button:EnableRegenerateOnResponse() -- rebuild the menu to pick up included set changes
 end
 
 -- lock icon toggle / memory usage
@@ -887,67 +761,34 @@ do
 	editBox:SetMaxLetters(40)
 	editBox:SetScript("OnTextChanged", OnTextChanged)
 
-	local filterButton = CreateFrame("Button", "BetterAddonListFilterButton", AddonList, "UIMenuButtonStretchTemplate")
+	local filterButton = CreateFrame("DropdownButton", "BetterAddonListFilterButton", AddonList, "WowStyle1FilterDropdownTemplate")
 	filterButton:SetPoint("LEFT", editBox, "RIGHT", 3, 0)
 	filterButton:SetSize(93, 22)
-	filterButton:SetText(FILTER)
 
-	local arrow = filterButton:CreateTexture(nil, "ARTWORK")
-	arrow:SetPoint("RIGHT", -5, 0)
-	arrow:SetSize(10, 12)
-	arrow:SetTexture([[Interface\ChatFrame\ChatFrameExpandArrow]])
-	arrow:Show()
-	filterButton.Icon = arrow
-
-	local function menu(self, level)
-		local info = UIDropDownMenu_CreateInfo()
-		info.keepShownOnClick = true
-
-		if level == 1 then
-			info.isNotRadio = true
-			for _, key in ipairs(filters) do
-				info.text = L[("FILTER_%s"):format(key)]
-				info.func = function(_, _, _, checked)
-					filterList[key] = checked
-					OnTextChanged(editBox)
-				end
-				info.checked = filterList[key]
-				UIDropDownMenu_AddButton(info, level)
-			end
-		end
-		--[[
-			-- - Addon meta flags
-			info.checked = 	nil
-			info.isNotRadio = nil
-			info.func =  nil
-
-			info.text = "Categories"
-			info.value = 1
-			info.hasArrow = true
-			info.notCheckable = true
-			UIDropDownMenu_AddButton(info, level)
-		else
-			if UIDROPDOWNMENU_MENU_VALUE == 1 then
-				info.hasArrow = false
-				info.isNotRadio = true
-				info.notCheckable = true
-
-				info.text = CHECK_ALL
-				UIDropDownMenu_AddButton(info, level)
-
-				info.text = UNCHECK_ALL
-				UIDropDownMenu_AddButton(info, level)
-			end
-		end
-		--]]
+	local function isFilterSelected(key)
+		return filterList[key]
 	end
+	local function setFilterSelected(key)
+		filterList[key] = not filterList[key]
+		OnTextChanged(editBox)
+	end
+	filterButton:SetupMenu(function(_, root)
+		for _, key in ipairs(filters) do
+			root:CreateCheckbox(L[("FILTER_%s"):format(key)], isFilterSelected, setFilterSelected, key)
+		end
+	end)
 
-	local dropdown = CreateFrame("Frame", "BetterAddonListFilterDropDown", AddonList, "UIDropDownMenuTemplate")
-	UIDropDownMenu_Initialize(dropdown, menu, "MENU")
-
-	filterButton:SetScript("OnClick", function(self)
-		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-		ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 74, 15)
+	filterButton:SetDefaultCallback(function()
+		wipe(filterList)
+		OnTextChanged(editBox)
+	end)
+	filterButton:SetIsDefaultCallback(function()
+		for _, value in next, filterList do
+			if value then
+				return false
+			end
+		end
+		return true
 	end)
 end
 

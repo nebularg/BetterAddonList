@@ -33,6 +33,8 @@ globals = {
 	"hooksecurefunc",
 	"IsAddonVersionCheckEnabled",
 	"IsShiftKeyDown",
+	"MenuResponse",
+	"MenuUtil",
 	"PlaySound",
 	"ResetAddOns",
 	"SecureCmdOptionParse",
