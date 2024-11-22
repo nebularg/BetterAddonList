@@ -60,6 +60,7 @@ globals = {
 	"NONE",
 	"OKAY",
 	"YES",
+	"NORMAL_FONT_COLOR",
 }
 files["BetterAddonList.lua"].globals = {
 	"LibStub",

@@ -284,7 +284,7 @@ LibDialog:Register("BETTER_ADDONLIST_SAVESET", {
 		{ text = CANCEL, },
 	},
 	on_show = function(self, data)
-		self.text:SetFormattedText(L["Save the currently selected addons to %s?"], data)
+		self.text:SetFormattedText(L["Save the currently selected addons to %s?"], NORMAL_FONT_COLOR:WrapTextInColorCode(data))
 		CloseDropDownMenus(1)
 	end,
 	no_close_button = true,
@@ -298,7 +298,7 @@ LibDialog:Register("BETTER_ADDONLIST_DELETESET", {
 		{ text = CANCEL, },
 	},
 	on_show = function(self, data)
-		self.text:SetFormattedText(L["Delete set %s?"], data)
+		self.text:SetFormattedText(L["Delete set %s?"], NORMAL_FONT_COLOR:WrapTextInColorCode(data))
 		CloseDropDownMenus(1)
 	end,
 	no_close_button = true,
@@ -380,7 +380,7 @@ LibDialog:Register("BETTER_ADDONLIST_RENAMESET", {
 		},
 	},
 	on_show = function(self, data)
-		self.text:SetFormattedText(L["Enter the new name for %s"], data)
+		self.text:SetFormattedText(L["Enter the new name for %s"], NORMAL_FONT_COLOR:WrapTextInColorCode(data))
 		CloseDropDownMenus(1)
 	end,
 	no_close_button = true,
@@ -401,7 +401,7 @@ LibDialog:Register("BETTER_ADDONLIST_ERROR_NAME", {
 		{ text = CANCEL, },
 	},
 	on_show = function(self, data)
-		self.text:SetFormattedText(L["There is already a set named \"%s\".\nPlease choose another name."], data[1])
+		self.text:SetFormattedText(L["There is already a set named \"%s\".\nPlease choose another name."], NORMAL_FONT_COLOR:WrapTextInColorCode(data[1]))
 	end,
 	icon = _G.STATICPOPUP_TEXTURE_ALERT,
 	-- cancels_on_spawn = { "BETTER_ADDONLIST_NEWSET", "BETTER_ADDONLIST_RENAMESET" },
