@@ -461,7 +461,8 @@ do
 					view:CreateTitle(L["Addon List"])
 					sort(sets[currentSet], icmp)
 					for _, addonName in ipairs(sets[currentSet]) do
-						view:CreateButton(addonName):SetEnabled(false)
+						local _, _, _, loadable, reason = C_AddOns.GetAddOnInfo(addonName)
+						view:CreateButton(addonName):SetEnabled(loadable or reason ~= "MISSING")
 					end
 				end
 
