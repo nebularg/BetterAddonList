@@ -428,23 +428,17 @@ do
 	end
 
 	local function IsSetIncluded(data)
-		local name, setName = data[1], data[2]
-		return included[name] and included[name][setName] and true
+		local setA, setB = data[1], data[2]
+		return included[setA] and included[setA][setB] and true
 	end
 
-	local function SetSetIncluded(data, _, menu)
+	local function SetSetIncluded(data)
 		local value = not IsSetIncluded(data)
-		local name, setName = data[1], data[2]
-		if not included[name] then
-			included[name] = {}
+		local setA, setB = data[1], data[2]
+		if not included[setA] then
+			included[setA] = {}
 		end
-		included[name][setName] = value or nil
-	end
-
-	local function RemoveIncludedSet(data)
-		local name, setName = data[1], data[2]
-		included[setName][name] = nil
-		-- return MenuResponse.Refresh
+		included[setA][setB] = value or nil
 	end
 
 	local function GenerateSetsMenu(owner, root)
@@ -483,27 +477,13 @@ do
 
 				set:CreateDivider()
 
-				local includeSet = set:CreateButton(L["Include with another set"])
-				includeSet:SetEnabled(#list > 2) -- have more than the current set and default
-				includeSet:CreateTitle(L["Include with another set"])
+				local includeSets = set:CreateButton(L["Enabled with this set"])
+				includeSets:SetEnabled(#list > 1) -- have more than the current set
+				-- includeSets:CreateTitle(L["Additionally enable addons from these sets"])
 				for _, name in ipairs(list) do
 					if name ~= currentSet then
-						local s = includeSet:CreateCheckbox(name, IsSetIncluded, SetSetIncluded, {name, currentSet})
-						if included[currentSet] and included[currentSet][name] then
-							s:SetEnabled(false)
-						end
+						includeSets:CreateCheckbox(name, IsSetIncluded, SetSetIncluded, {currentSet, name})
 					end
-				end
-
-				local removeIncludedSet = set:CreateButton(L["Remove an included set"])
-				removeIncludedSet:SetEnabled(included[currentSet] and next(included[currentSet]) and true)
-				removeIncludedSet:CreateTitle(L["Remove an included set"])
-				if included[currentSet] and next(included[currentSet]) then
-					for name in next, included[currentSet] do
-						removeIncludedSet:CreateButton(name, RemoveIncludedSet, {name, currentSet})
-					end
-				else
-					removeIncludedSet:CreateButton(NONE):SetEnabled(false)
 				end
 
 				set:CreateDivider()
