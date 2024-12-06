@@ -1,6 +1,6 @@
 local ADDON_NAME, ns = ...
 BetterAddonListDB = BetterAddonListDB or {}
-
+BetterAddonList = {}
 local _G = _G
 
 local AddonList_Update = AddonList_Update
@@ -855,4 +855,34 @@ function addon:DeleteSet(name)
 	if not sets[name] then return end
 
 	sets[name] = nil
+end
+
+--API
+
+function BetterAddonList:LoadSet(name)
+	addon:LoadSet(name)
+end
+
+function BetterAddonList:EnableSet(name, done)
+	addon:EnableSet(name, done)
+end
+
+function BetterAddonList:DisableSet(name)
+	addon:DisableSet(name)
+end
+
+function BetterAddonList:SaveSet(name)
+	addon:SaveSet(name)
+end
+
+function BetterAddonList:RenameSet(name, newName)
+	addon:RenameSet(name, newName)
+end
+
+function BetterAddonList:DeleteSet(name)
+	addon:DeleteSet(name)
+end
+
+function BetterAddonList:GetSets()
+	return BetterAddonListDB.sets
 end
