@@ -962,10 +962,6 @@ end
 
 --API
 
-function BetterAddonList:IsReloadPending()
-	addon:HasAnyChanged()
-end
-
 function BetterAddonList:LoadSet(name)
 	addon:LoadSet(name)
 end
