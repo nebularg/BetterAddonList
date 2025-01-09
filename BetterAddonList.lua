@@ -420,6 +420,7 @@ LibDialog:Register("BETTER_ADDONLIST_ERROR_NAME", {
 })
 
 -- sets menu
+local natsort
 do
 	-- pseudo natural sorting
 	local function pad(s)
@@ -429,7 +430,7 @@ do
 		end
 		return s
 	end
-	local function natsort(a, b)
+	function natsort(a, b)
 		return a:gsub("(%d+)", pad):lower() < b:gsub("(%d+)", pad):lower()
 	end
 	local function icmp(a, b) -- ignore color
@@ -982,3 +983,42 @@ function addon:DeleteSet(name)
 
 	sets[name] = nil
 end
+
+-- indexed set list (can also be used as AceConfig select sorting)
+function addon:GetSets()
+	local list = {}
+	for name in next, sets do
+		list[#list + 1] = name
+	end
+	sort(list, natsort)
+	return list
+end
+
+-- keyed set list (for use as AceConfig select values)
+function addon:GetSetsAsValues()
+	local list = {}
+	for name in next, sets do
+		list[name] = name
+	end
+	return list
+end
+
+------------------------------------
+-- API
+
+local public = {}
+local api = {
+	"LoadSet",
+	"EnableSet",
+	"DisableSet",
+	"SaveSet",
+	"RenameSet",
+	"DeleteSet",
+	"GetSets",
+	"GetSetsAsValues",
+}
+for _, name in next, api do
+	public[name] = addon[name]
+end
+
+_G.BetterAddonList = public
