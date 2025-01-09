@@ -5,6 +5,7 @@ local LibDialog = LibStub("LibDialog-1.0n")
 
 local _G = _G
 local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
+local wow_110 = AddonList.ForceLoad and true
 
 local L = ns.L
 L.LOAD_ADDON = GetLocale() == "ruRU" and "Загрузить" or LOAD_ADDON
@@ -153,55 +154,63 @@ function addon:PLAYER_LOGIN()
 	AddonList:SetPoint("CENTER")
 
 	-- move and resize the "Load out of date addons" check box
-	AddonListForceLoad:ClearAllPoints()
-	AddonListForceLoad:SetPoint("TOPLEFT", AddonList, 4, 0)
-	AddonListForceLoad:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
-	AddonListForceLoad:SetSize(24, 24)
-	local regions = {AddonListForceLoad:GetRegions()}
-	regions[1]:SetPoint("LEFT", AddonListForceLoad, "RIGHT", 2, 0)
-	regions[1]:SetText(L["Load out of date"])
-
-	-- add some option buttons
-	local hideIcons = CreateFrame("Button", "BetterAddonListOptionHideIcons", AddonList)
-	hideIcons:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
-	hideIcons:SetNormalTexture(134400) -- inv_misc_questionmark
-	hideIcons:SetHighlightTexture(134400)
-	hideIcons:SetSize(20, 20)
-	hideIcons:SetPoint("LEFT", AddonListDisableAllButton, "RIGHT", 25, -1)
-	hideIcons:SetScript("OnClick", function(this)
-		-- cycle through
-		if BetterAddonListDB.hide_icons == false then
-			BetterAddonListDB.hide_icons = true -- true = hide
-		elseif BetterAddonListDB.hide_icons == true then
-			BetterAddonListDB.hide_icons = nil -- nil = nodefault
-		elseif BetterAddonListDB.hide_icons == nil then
-			BetterAddonListDB.hide_icons = false --- false = show all
+	local forceLoad = AddonListForceLoad or AddonList.ForceLoad
+	forceLoad:ClearAllPoints()
+	forceLoad:SetPoint("TOPLEFT", AddonList, 4, 0)
+	forceLoad:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
+	forceLoad:SetSize(24, 24)
+	local regions = {forceLoad:GetRegions()}
+	for _, region in ipairs(regions) do
+		if region:IsObjectType("FontString") then
+			region:SetPoint("LEFT", forceLoad, "RIGHT", 2, 0)
+			region:SetText(L["Load out of date"])
+			break
 		end
-		UpdateList()
-	end)
-	hideIcons:SetScript("OnEnter", function(this)
-		GameTooltip:SetOwner(this, "ANCHOR_TOPLEFT")
-		GameTooltip:SetText(L["Toggle Icons"])
-		GameTooltip:Show()
-	end)
-	hideIcons:SetScript("OnLeave", GameTooltip_Hide)
+	end
 
-	local hideMemory = CreateFrame("Button", "BetterAddonListOptionHideIcons", AddonList)
-	hideMemory:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
-	hideMemory:SetNormalTexture(4555550) -- inv_10_jewelcrafting_gem1leveling_cut_green
-	hideMemory:SetHighlightTexture(4555550)
-	hideMemory:SetSize(20, 20)
-	hideMemory:SetPoint("LEFT", hideIcons, "RIGHT", 2, 0)
-	hideMemory:SetScript("OnClick", function(this)
-		BetterAddonListDB.hide_memory = not BetterAddonListDB.hide_memory or nil
-		UpdateList()
-	end)
-	hideMemory:SetScript("OnEnter", function(this)
-		GameTooltip:SetOwner(this, "ANCHOR_TOPLEFT")
-		GameTooltip:SetText(L["Toggle Memory Usage"])
-		GameTooltip:Show()
-	end)
-	hideMemory:SetScript("OnLeave", GameTooltip_Hide)
+	if not wow_110 then
+		-- add some option buttons
+		local hideIcons = CreateFrame("Button", "BetterAddonListOptionHideIcons", AddonList)
+		hideIcons:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
+		hideIcons:SetNormalTexture(134400) -- inv_misc_questionmark
+		hideIcons:SetHighlightTexture(134400)
+		hideIcons:SetSize(20, 20)
+		hideIcons:SetPoint("LEFT", AddonListDisableAllButton, "RIGHT", 25, -1)
+		hideIcons:SetScript("OnClick", function(this)
+			-- cycle through
+			if BetterAddonListDB.hide_icons == false then
+				BetterAddonListDB.hide_icons = true -- true = hide
+			elseif BetterAddonListDB.hide_icons == true then
+				BetterAddonListDB.hide_icons = nil -- nil = nodefault
+			elseif BetterAddonListDB.hide_icons == nil then
+				BetterAddonListDB.hide_icons = false --- false = show all
+			end
+			UpdateList()
+		end)
+		hideIcons:SetScript("OnEnter", function(this)
+			GameTooltip:SetOwner(this, "ANCHOR_TOPLEFT")
+			GameTooltip:SetText(L["Toggle Icons"])
+			GameTooltip:Show()
+		end)
+		hideIcons:SetScript("OnLeave", GameTooltip_Hide)
+
+		local hideMemory = CreateFrame("Button", "BetterAddonListOptionHideIcons", AddonList)
+		hideMemory:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
+		hideMemory:SetNormalTexture(4555550) -- inv_10_jewelcrafting_gem1leveling_cut_green
+		hideMemory:SetHighlightTexture(4555550)
+		hideMemory:SetSize(20, 20)
+		hideMemory:SetPoint("LEFT", hideIcons, "RIGHT", 2, 0)
+		hideMemory:SetScript("OnClick", function(this)
+			BetterAddonListDB.hide_memory = not BetterAddonListDB.hide_memory or nil
+			UpdateList()
+		end)
+		hideMemory:SetScript("OnEnter", function(this)
+			GameTooltip:SetOwner(this, "ANCHOR_TOPLEFT")
+			GameTooltip:SetText(L["Toggle Memory Usage"])
+			GameTooltip:Show()
+		end)
+		hideMemory:SetScript("OnLeave", GameTooltip_Hide)
+	end
 
 	-- let the frame overlap over ui frames
 	--UIPanelWindows["AddonList"].area = nil
@@ -553,179 +562,182 @@ do
 		return deps
 	end
 
-	AddonTooltip_Update = function(owner)
-		local index = owner:GetID()
-		if not index or index < 1 or index > C_AddOns.GetNumAddOns() then return end
+	if not wow_110 then
+		AddonTooltip_Update = function(owner)
+			local index = owner:GetID()
+			if not index or index < 1 or index > C_AddOns.GetNumAddOns() then return end
 
-		local name, title, notes, _, _, security = C_AddOns.GetAddOnInfo(index)
-		GameTooltip:ClearLines()
-		if security == "BANNED" then
-			GameTooltip:SetText(ADDON_BANNED_TOOLTIP)
-		else
-			local version = GetAddOnMetadata(index, "Version")
-			if version and version ~= "@project-version@" then
-				GameTooltip:AddDoubleLine(title or name, version)
+			local name, title, notes, _, _, security = C_AddOns.GetAddOnInfo(index)
+			GameTooltip:ClearLines()
+			if security == "BANNED" then
+				GameTooltip:SetText(ADDON_BANNED_TOOLTIP)
 			else
-				GameTooltip:AddLine(title or name)
-			end
-			GameTooltip:AddLine(notes, 1.0, 1.0, 1.0)
-			GameTooltip:AddLine(buildDeps(C_AddOns.GetAddOnDependencies(index)))
-
-			local memory = owner.memoryUsage
-			if memory then
-				local text
-				if memory > 1000 then
-					memory = memory / 1000
-					text = L["Memory: %.02f MB"]:format(memory)
+				local version = GetAddOnMetadata(index, "Version")
+				if version and version ~= "@project-version@" then
+					GameTooltip:AddDoubleLine(title or name, version)
 				else
-					text = L["Memory: %.0f KB"]:format(memory)
+					GameTooltip:AddLine(title or name)
 				end
-				GameTooltip:AddLine(text)
+				GameTooltip:AddLine(notes, 1.0, 1.0, 1.0, true)
+				GameTooltip:AddLine(buildDeps(C_AddOns.GetAddOnDependencies(index)))
+
+				local memory = owner.memoryUsage
+				if memory then
+					local text
+					if memory > 1000 then
+						memory = memory / 1000
+						text = L["Memory: %.02f MB"]:format(memory)
+					else
+						text = L["Memory: %.0f KB"]:format(memory)
+					end
+					GameTooltip:AddLine(text)
+				end
 			end
+			GameTooltip:Show()
 		end
-		GameTooltip:AddLine("ID: " .. index, _G.LIGHTGRAY_FONT_COLOR:GetRGB())
-		GameTooltip:Show()
 	end
 
-	local InitButton = function(entry, addonIndex)
-		local checkbox = entry.Enabled
-		local title = entry.Title
-		local status = entry.Status
+	if not wow_110 then
+		local InitButton = function(entry, addonIndex)
+			local checkbox = entry.Enabled
+			local title = entry.Title
+			local status = entry.Status
 
-		if BetterAddonListDB.hide_icons ~= false then -- false = show all
-			local titleIcon
-			local iconTexture = GetAddOnMetadata(addonIndex, "IconTexture")
-			local iconAtlas = GetAddOnMetadata(addonIndex, "IconAtlas")
-			if not iconTexture and not iconAtlas and BetterAddonListDB.hide_icons == nil then -- nil = nodefault
-				titleIcon = CreateSimpleTextureMarkup("Interface\\ICONS\\INV_Misc_QuestionMark", 20, 20)
-			elseif BetterAddonListDB.hide_icons then -- true = hide
-				if iconTexture then
-					titleIcon = CreateSimpleTextureMarkup(iconTexture, 20, 20)
-				elseif iconAtlas then
-					titleIcon = CreateAtlasMarkup(iconAtlas, 20, 20)
-				else
+			if BetterAddonListDB.hide_icons ~= false then -- false = show all
+				local titleIcon
+				local iconTexture = GetAddOnMetadata(addonIndex, "IconTexture")
+				local iconAtlas = GetAddOnMetadata(addonIndex, "IconAtlas")
+				if not iconTexture and not iconAtlas and BetterAddonListDB.hide_icons == nil then -- nil = nodefault
 					titleIcon = CreateSimpleTextureMarkup("Interface\\ICONS\\INV_Misc_QuestionMark", 20, 20)
+				elseif BetterAddonListDB.hide_icons then -- true = hide
+					if iconTexture then
+						titleIcon = CreateSimpleTextureMarkup(iconTexture, 20, 20)
+					elseif iconAtlas then
+						titleIcon = CreateAtlasMarkup(iconAtlas, 20, 20)
+					else
+						titleIcon = CreateSimpleTextureMarkup("Interface\\ICONS\\INV_Misc_QuestionMark", 20, 20)
+					end
+				end
+				if titleIcon then
+					local name = title:GetText()
+					local _, start = name:find(titleIcon, nil, true)
+					if start then
+						title:SetText(name:sub(start + 2))
+					end
 				end
 			end
-			if titleIcon then
-				local name = title:GetText()
-				local _, start = name:find(titleIcon, nil, true)
-				if start then
-					title:SetText(name:sub(start + 2))
-				end
+
+			local lockIcon = entry.Protected
+			if not lockIcon then
+				lockIcon = CreateFrame("Button", nil, entry, nil, addonIndex)
+				lockIcon:SetSize(16, 16)
+				lockIcon:SetPoint("CENTER", checkbox, "CENTER")
+				lockIcon:SetNormalTexture([[Interface\Glues\CharacterSelect\Glues-AddOn-Icons]])
+				lockIcon:GetNormalTexture():SetTexCoord(0, 16/64, 0, 1) -- AddonList_SetSecurityIcon
+				lockIcon:SetScript("OnClick", OnClick)
+				lockIcon:Hide()
+				entry.Protected = lockIcon
+
+				checkbox:HookScript("OnClick", function(self, ...) OnClick(lockIcon, ...) end)
 			end
-		end
 
-		local lockIcon = entry.Protected
-		if not lockIcon then
-			lockIcon = CreateFrame("Button", nil, entry, nil, addonIndex)
-			lockIcon:SetSize(16, 16)
-			lockIcon:SetPoint("CENTER", checkbox, "CENTER")
-			lockIcon:SetNormalTexture([[Interface\Glues\CharacterSelect\Glues-AddOn-Icons]])
-			lockIcon:GetNormalTexture():SetTexCoord(0, 16/64, 0, 1) -- AddonList_SetSecurityIcon
-			lockIcon:SetScript("OnClick", OnClick)
-			lockIcon:Hide()
-			entry.Protected = lockIcon
+			local memIcon = entry.Memory
+			if not memIcon then
+				memIcon = CreateFrame("Button", nil, entry, nil, addonIndex)
+				memIcon:SetSize(6, 32)
+				memIcon:SetPoint("RIGHT", checkbox, "LEFT", 1, 0)
+				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+				entry.Memory = memIcon
+			end
 
-			checkbox:HookScript("OnClick", function(self, ...) OnClick(lockIcon, ...) end)
-		end
+			-- fix the "Load AddOn" text overflowing for some locales
+			local load = entry.LoadAddonButton
+			load:SetText(L.LOAD_ADDON)
+			load:SetWidth(#L.LOAD_ADDON > 12 and 120 or 100)
 
-		local memIcon = entry.Memory
-		if not memIcon then
-			memIcon = CreateFrame("Button", nil, entry, nil, addonIndex)
-			memIcon:SetSize(6, 32)
-			memIcon:SetPoint("RIGHT", checkbox, "LEFT", 1, 0)
-			memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
-			entry.Memory = memIcon
-		end
+			local enabled = C_AddOns.GetAddOnEnableState(addonIndex, character) > 0
 
-		-- fix the "Load AddOn" text overflowing for some locales
-		local load = entry.LoadAddonButton
-		load:SetText(L.LOAD_ADDON)
-		load:SetWidth(#L.LOAD_ADDON > 12 and 120 or 100)
-
-		local enabled = C_AddOns.GetAddOnEnableState(addonIndex, character) > 0
-
-		-- XXX Handle enabled state stuff until Blizzard fixes their GetAddOnEnableState usage
-		local loadable, reason = C_AddOns.IsAddOnLoadable(addonIndex, character)
-		if loadable or (enabled and (reason == "DEP_DEMAND_LOADED" or reason == "DEMAND_LOADED")) then
-			title:SetTextColor(1.0, 0.78, 0.0)
-		elseif enabled and reason ~= "DEP_DISABLED" then
-			title:SetTextColor(1.0, 0.1, 0.1)
-		else
-			title:SetTextColor(0.5, 0.5, 0.5)
-		end
-		if enabled ~= AddonList.startStatus[addonIndex] and reason ~= "DEP_DISABLED" or
-			(reason ~= "INTERFACE_VERSION" and tContains(AddonList.outOfDateIndexes, addonIndex)) or
-			(reason == "INTERFACE_VERSION" and not tContains(AddonList.outOfDateIndexes, addonIndex))
-		then
-			if enabled then
-				-- special case for loadable on demand addons
-				if AddonList_IsAddOnLoadOnDemand(addonIndex) then
-					AddonList_SetStatus(entry, true, false, false)
+			-- XXX Handle enabled state stuff until Blizzard fixes their GetAddOnEnableState usage
+			local loadable, reason = C_AddOns.IsAddOnLoadable(addonIndex, character)
+			if loadable or (enabled and (reason == "DEP_DEMAND_LOADED" or reason == "DEMAND_LOADED")) then
+				title:SetTextColor(1.0, 0.78, 0.0)
+			elseif enabled and reason ~= "DEP_DISABLED" then
+				title:SetTextColor(1.0, 0.1, 0.1)
+			else
+				title:SetTextColor(0.5, 0.5, 0.5)
+			end
+			if enabled ~= AddonList.startStatus[addonIndex] and reason ~= "DEP_DISABLED" or
+				(reason ~= "INTERFACE_VERSION" and tContains(AddonList.outOfDateIndexes, addonIndex)) or
+				(reason == "INTERFACE_VERSION" and not tContains(AddonList.outOfDateIndexes, addonIndex))
+			then
+				if enabled then
+					-- special case for loadable on demand addons
+					if AddonList_IsAddOnLoadOnDemand(addonIndex) then
+						AddonList_SetStatus(entry, true, false, false)
+					else
+						AddonList_SetStatus(entry, false, false, true)
+					end
 				else
 					AddonList_SetStatus(entry, false, false, true)
 				end
 			else
-				AddonList_SetStatus(entry, false, false, true)
+				AddonList_SetStatus(entry, false, true, false)
 			end
-		else
-			AddonList_SetStatus(entry, false, true, false)
-		end
-		-- XXX
+			-- XXX
 
-		if enabled then
-			local depsEnabled = CheckAddonDependencies(C_AddOns.GetAddOnDependencies(addonIndex))
-			if not depsEnabled then
-				title:SetTextColor(1.0, 0.1, 0.1)
-				status:SetText(_G.ADDON_DEP_DISABLED)
-			end
-			if C_AddOns.IsAddOnLoadOnDemand(addonIndex) and not C_AddOns.IsAddOnLoaded(addonIndex) and depsEnabled then
-				AddonList_SetStatus(entry, true, false, false)
-			end
-
-			if not BetterAddonListDB.hide_memory then
-				local memory = GetAddOnMemoryUsage(addonIndex)
-				entry.memoryUsage = memory
-				local usage = memory / 8000 -- just needed some baseline
-				if usage > 0.8 then
-					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
-				elseif usage > 0.6 then
-					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
-				elseif usage > 0.4 then
-					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
-				elseif usage > 0.2 then
-					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
-				elseif usage > 0.1 then
-					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
-				else
-					memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+			if enabled then
+				local depsEnabled = CheckAddonDependencies(C_AddOns.GetAddOnDependencies(addonIndex))
+				if not depsEnabled then
+					title:SetTextColor(1.0, 0.1, 0.1)
+					status:SetText(_G.ADDON_DEP_DISABLED)
 				end
-				memIcon:Show()
+				if C_AddOns.IsAddOnLoadOnDemand(addonIndex) and not C_AddOns.IsAddOnLoaded(addonIndex) and depsEnabled then
+					AddonList_SetStatus(entry, true, false, false)
+				end
+
+				if not BetterAddonListDB.hide_memory then
+					local memory = GetAddOnMemoryUsage(addonIndex)
+					entry.memoryUsage = memory
+					local usage = memory / 8000 -- just needed some baseline
+					if usage > 0.8 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
+					elseif usage > 0.6 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
+					elseif usage > 0.4 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
+					elseif usage > 0.2 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
+					elseif usage > 0.1 then
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
+					else
+						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+					end
+					memIcon:Show()
+				else
+					entry.memoryUsage = nil
+					memIcon:Hide()
+				end
 			else
 				entry.memoryUsage = nil
 				memIcon:Hide()
 			end
-		else
-			entry.memoryUsage = nil
-			memIcon:Hide()
+
+			local protected = IsAddonProtected(addonIndex)
+			lockIcon:SetShown(protected)
+			checkbox:SetShown(not protected)
 		end
+		hooksecurefunc("AddonList_InitButton", InitButton)
 
-		local protected = IsAddonProtected(addonIndex)
-		lockIcon:SetShown(protected)
-		checkbox:SetShown(not protected)
-	end
-	hooksecurefunc("AddonList_InitButton", InitButton)
-
-	hooksecurefunc("AddonList_LoadAddOn", function(index)
-		UpdateAddOnMemoryUsage()
-		for _, frame in AddonList.ScrollBox:EnumerateFrames() do
-			if frame:GetID() == index then
-				InitButton(frame, index)
-				return
+		hooksecurefunc("AddonList_LoadAddOn", function(index)
+			UpdateAddOnMemoryUsage()
+			for _, frame in AddonList.ScrollBox:EnumerateFrames() do
+				if frame:GetID() == index then
+					InitButton(frame, index)
+					return
+				end
 			end
-		end
-	end)
+		end)
+	end
 end
 
 -- search / filter
@@ -762,6 +774,8 @@ do
 	local strfind = string.find
 	local searchString = ""
 	local function OnTextChanged(self)
+		if wow_110 then return end
+
 		SearchBoxTemplate_OnTextChanged(self)
 		local oldText = searchString
 		searchString = self:GetText():lower():trim()
@@ -807,31 +821,38 @@ do
 	end
 
 	function UpdateList()
-		if not AddonList.searchList:IsEmpty() then
-			AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
+		if wow_110 then
+			AddonList_Update()
+			return
 		else
-			AddonList.ScrollBox:SetDataProvider(fullList, true)
+			if not AddonList.searchList:IsEmpty() then
+				AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
+			else
+				AddonList.ScrollBox:SetDataProvider(fullList, true)
+			end
 		end
 
+		local button = AddonListOkayButton or AddonList.OkayButton
 		if HasAnyChanged() then
-			AddonListOkayButton:SetText(_G.RELOADUI)
+			button:SetText(_G.RELOADUI)
 			AddonList.shouldReload = true
 		else
-			AddonListOkayButton:SetText(_G.OKAY)
+			button:SetText(_G.OKAY)
 			AddonList.shouldReload = false
 		end
 	end
 
 	hooksecurefunc("AddonList_Update", function()
-		if not AddonList.searchList:IsEmpty() then
+		if not wow_110 and not AddonList.searchList:IsEmpty() then
 			AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
 		end
 
+		local button = AddonListOkayButton or AddonList.OkayButton
 		if HasAnyChanged() then
-			AddonListOkayButton:SetText(_G.RELOADUI)
+			button:SetText(_G.RELOADUI)
 			AddonList.shouldReload = true
 		else
-			AddonListOkayButton:SetText(_G.OKAY)
+			button:SetText(_G.OKAY)
 			AddonList.shouldReload = false
 		end
 	end)
@@ -843,42 +864,44 @@ do
 		OnTextChanged(self.SearchBox)
 	end)
 
-	local editBox = CreateFrame("EditBox", "BetterAddonListSearchBox", AddonList, "SearchBoxTemplate")
-	editBox:SetPoint("TOPRIGHT", -107, -33) -- -107 w/filter, -11 w/o
-	editBox:SetSize(115, 20)
-	editBox:SetMaxLetters(40)
-	editBox:SetScript("OnTextChanged", OnTextChanged)
-	AddonList.SearchBox = editBox
+	if not wow_110 then
+		local editBox = CreateFrame("EditBox", "BetterAddonListSearchBox", AddonList, "SearchBoxTemplate")
+		editBox:SetPoint("TOPRIGHT", -107, -33) -- -107 w/filter, -11 w/o
+		editBox:SetSize(115, 20)
+		editBox:SetMaxLetters(40)
+		editBox:SetScript("OnTextChanged", OnTextChanged)
+		AddonList.SearchBox = editBox
 
-	local filterButton = CreateFrame("DropdownButton", "BetterAddonListFilterButton", AddonList, "WowStyle1FilterDropdownTemplate")
-	filterButton:SetPoint("LEFT", editBox, "RIGHT", 3, 0)
-	filterButton:SetSize(93, 22)
+		local filterButton = CreateFrame("DropdownButton", "BetterAddonListFilterButton", AddonList, "WowStyle1FilterDropdownTemplate")
+		filterButton:SetPoint("LEFT", editBox, "RIGHT", 3, 0)
+		filterButton:SetSize(93, 22)
 
-	local function isFilterSelected(key)
-		return filterList[key]
-	end
-	local function setFilterSelected(key)
-		filterList[key] = not filterList[key]
-		OnTextChanged(editBox)
-	end
-	filterButton:SetupMenu(function(_, root)
-		for _, key in ipairs(filters) do
-			root:CreateCheckbox(L[("FILTER_%s"):format(key)], isFilterSelected, setFilterSelected, key)
+		local function isFilterSelected(key)
+			return filterList[key]
 		end
-	end)
-
-	filterButton:SetDefaultCallback(function()
-		wipe(filterList)
-		OnTextChanged(editBox)
-	end)
-	filterButton:SetIsDefaultCallback(function()
-		for _, value in next, filterList do
-			if value then
-				return false
+		local function setFilterSelected(key)
+			filterList[key] = not filterList[key]
+			OnTextChanged(editBox)
+		end
+		filterButton:SetupMenu(function(_, root)
+			for _, key in ipairs(filters) do
+				root:CreateCheckbox(L[("FILTER_%s"):format(key)], isFilterSelected, setFilterSelected, key)
 			end
-		end
-		return true
-	end)
+		end)
+
+		filterButton:SetDefaultCallback(function()
+			wipe(filterList)
+			OnTextChanged(editBox)
+		end)
+		filterButton:SetIsDefaultCallback(function()
+			for _, value in next, filterList do
+				if value then
+					return false
+				end
+			end
+			return true
+		end)
+	end
 end
 
 function addon:EnableProtected()

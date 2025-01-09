@@ -68,6 +68,7 @@ files["BetterAddonList.lua"].globals = {
 	"LibStub",
 	"AddonList_IsAddOnLoadOnDemand",
 	"AddonList_HasAnyChanged",
+	"AddonList_Update",
 	"AddonListDisableAllButton",
 	"AddonListOkayButton",
 	"CreateDataProvider",
