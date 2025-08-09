@@ -531,7 +531,7 @@ end
 -- lock icon toggle / memory usage
 do
 	local function OnClick(lock, button)
-		local index = lock:GetID()
+		local index = lock:GetParent():GetID()
 		if IsShiftKeyDown() and button == "LeftButton" then
 			SetAddonProtected(index, not IsAddonProtected(index))
 			AddonList_Enable(index, true)
