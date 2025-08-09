@@ -1,4 +1,4 @@
-## Interface: 11505, 11506, 40401
+## Interface: 11507, 50500, 30405
 ## Title: BetterAddonList
 ## Notes: Enhances the default AddOns list.
 ## Author: Neb
