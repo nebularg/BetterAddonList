@@ -65,7 +65,7 @@ function addon:ADDON_LOADED(addon_name)
 
 	character = UnitName("player")
 
-	--- From BlizzBugsSuck (https://mods.curse.com/addons/wow/blizzbugssuck):
+	--- From BlizzBugsSuck:
 	-- Fix glitchy-ness of EnableAddOn/DisableAddOn API, which affects the stability of the default
 	-- UI's addon management list (both in-game and glue), as well as any addon-management addons.
 	-- The problem is caused by broken defaulting logic used to merge AddOns.txt settings across
@@ -76,8 +76,12 @@ function addon:ADDON_LOADED(addon_name)
 	-- Note the fix applies to each character the first time it loads there, and a given character
 	-- is not protected from the faulty logic on addon X until after the fix has run with addon X
 	-- installed (regardless of enable setting) and the character has logged out normally.
+
+	-- XXX Using this to fix startStatus (classic defaults to "All", vanilla always uses player name)
 	for i = 1, C_AddOns.GetNumAddOns() do
-		if C_AddOns.GetAddOnEnableState(i, character) > 0 then
+		local enabled = C_AddOns.GetAddOnEnableState(i, character) > 0
+		AddonList.startStatus[i] = enabled
+		if enabled then
 			C_AddOns.EnableAddOn(i, character)
 		else
 			C_AddOns.DisableAddOn(i, character)
@@ -656,7 +660,7 @@ do
 
 					local memory = GetAddOnMemoryUsage(addonIndex)
 					entry.memory = memory
-					local usage = memory/8000 -- just needed some baseline!
+					local usage = memory / 8192 -- just needed some baseline!
 					if usage > 0.8 then
 						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
 					elseif usage > 0.6 then
