@@ -77,7 +77,7 @@ function addon:ADDON_LOADED(addon_name)
 	-- is not protected from the faulty logic on addon X until after the fix has run with addon X
 	-- installed (regardless of enable setting) and the character has logged out normally.
 
-	-- XXX Using this to fix startStatus (but I don't know why this is still needed?)
+	-- XXX Using this to fix startStatus (it uses "all chars"/nil when loading, then selects the player)
 	for i = 1, C_AddOns.GetNumAddOns() do
 		local enabled = C_AddOns.GetAddOnEnableState(i, character) > 0
 		AddonList.startStatus[i] = enabled
@@ -720,30 +720,6 @@ do
 		UpdateList()
 	end
 
-	-- XXX Blizzard uses guid for EnableAddOn/DisableAddOn, but name for GetAddOnEnableState.
-	-- This apparently isn't mapped to the same state table internally so the addon list via
-	-- AddonList_HasAnyChanged doesn't update and show the reload button properly?
-	local function HasAnyChanged()
-		local checkIfOutOfDate = false
-		if AddonList.outOfDate and not C_AddOns.IsAddonVersionCheckEnabled() then
-			return true
-		elseif not AddonList.outOfDate and C_AddOns.IsAddonVersionCheckEnabled() then
-			checkIfOutOfDate = true
-		end
-
-		for i = 1, C_AddOns.GetNumAddOns() do
-			local enabled = C_AddOns.GetAddOnEnableState(i, character) > 0
-			local _, _, _, loadable, reason = C_AddOns.GetAddOnInfo(i)
-			if checkIfOutOfDate and enabled and not loadable and reason == "INTERFACE_VERSION" then
-				return true
-			end
-			if enabled ~= AddonList.startStatus[i] and reason ~= "DEP_DISABLED" then
-				return true
-			end
-		end
-		return false
-	end
-
 	function UpdateList()
 		if wow_110 then
 			AddonList_Update()
@@ -755,29 +731,11 @@ do
 				AddonList.ScrollBox:SetDataProvider(fullList, true)
 			end
 		end
-
-		local button = AddonListOkayButton or AddonList.OkayButton
-		if HasAnyChanged() then
-			button:SetText(_G.RELOADUI)
-			AddonList.shouldReload = true
-		else
-			button:SetText(_G.OKAY)
-			AddonList.shouldReload = false
-		end
 	end
 
 	hooksecurefunc("AddonList_Update", function()
 		if not wow_110 and not AddonList.searchList:IsEmpty() then
 			AddonList.ScrollBox:SetDataProvider(AddonList.searchList, true)
-		end
-
-		local button = AddonListOkayButton or AddonList.OkayButton
-		if HasAnyChanged() then
-			button:SetText(_G.RELOADUI)
-			AddonList.shouldReload = true
-		else
-			button:SetText(_G.OKAY)
-			AddonList.shouldReload = false
 		end
 	end)
 
