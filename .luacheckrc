@@ -77,6 +77,8 @@ files["BetterAddonList.lua"].globals = {
 	"SearchBoxTemplate_OnTextChanged",
 }
 files["BetterAddonList_Classic.lua"].globals = {
+	"AddonList_EnableAll",
+	"AddonList_DisableAll",
 	"AddonList_Update",
 	"AddonListScrollFrame",
 	"AddonTooltip_BuildDeps",

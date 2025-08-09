@@ -38,6 +38,27 @@ local function CheckAddonDependencies(...)
 	return true
 end
 
+-- XXX override framexml functions to replace inconsistent usage of GetAddonCharacter
+function AddonList_Enable(index, enabled)
+	if enabled then
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+		C_AddOns.EnableAddOn(index, character)
+	else
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+		C_AddOns.DisableAddOn(index, character)
+	end
+	_G.AddonList_Update()
+end
+
+function AddonList_EnableAll()
+	C_AddOns.EnableAllAddOns(character)
+	_G.AddonList_Update()
+end
+
+function AddonList_DisableAll()
+	C_AddOns.DisableAllAddOns(character)
+	_G.AddonList_Update()
+end
 
 local addon = CreateFrame("Frame")
 addon:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
@@ -162,6 +183,7 @@ function addon:PLAYER_LOGIN()
 		local dropdown = AddonList.Dropdown
 		local _, nextSelection = dropdown:CollectSelectionData()
 		dropdown:Pick(nextSelection, 1) -- MenuInputContext.None
+		dropdown:Disable()
 		_G.AddonList_Update()
 	end)
 
@@ -675,6 +697,15 @@ do
 						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
 					end
 					memIcon:Show()
+
+					-- XXX undo TriStateCheckbox_SetState
+					if checkbox.state ~= 2 then
+						checkbox:SetChecked(true)
+						checkbox:SetVertexColor(1, 1, 1)
+						checkbox:SetDesaturated(false)
+						checkbox.AddonTooltip = nil
+						checkbox.state = 2
+					end
 				else
 					entry.memory = nil
 					memIcon:Hide()
