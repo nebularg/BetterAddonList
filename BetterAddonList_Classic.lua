@@ -478,9 +478,9 @@ do
 					tooltip:SetText(L["Load"], 1.0, 1.0, 1.0, 1.0, true)
 					tooltip:AddLine(L["Disable all addons then enable addons in this set."], 1.0, 0.82, 0.0, true)
 				end)
-				set:CreateButton(L["Save"], function(data) StaticPopup_Show("BETTER_ADDONLIST_SAVESET", data) end, currentSet)
-				set:CreateButton(L["Rename"], function(data) StaticPopup_Show("BETTER_ADDONLIST_RENAMESET", data) end, currentSet)
-				set:CreateButton(L["Delete"], function(data) StaticPopup_Show("BETTER_ADDONLIST_DELETESET", data) end, currentSet)
+				set:CreateButton(L["Save"], function(data) StaticPopup_Show("BETTER_ADDONLIST_SAVESET", data, nil, data) end, currentSet)
+				set:CreateButton(L["Rename"], function(data) StaticPopup_Show("BETTER_ADDONLIST_RENAMESET", data, nil, data) end, currentSet)
+				set:CreateButton(L["Delete"], function(data) StaticPopup_Show("BETTER_ADDONLIST_DELETESET", data, nil, data) end, currentSet)
 
 				set:CreateDivider()
 
