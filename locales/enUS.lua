@@ -14,6 +14,7 @@ ns.L = L
 L["Additionally enable addons from these sets"] = true
 L["Addon List"] = true
 L["Create new set"] = true
+L["Changes (%d)"] = true
 L["Delete"] = true
 L["Delete set %s?"] = true
 L["Deleted set %q."] = true

@@ -401,9 +401,9 @@ do
 	function natsort(a, b)
 		return a:gsub("(%d+)", pad):lower() < b:gsub("(%d+)", pad):lower()
 	end
-	local function icmp(a, b) -- ignore color
-		return a:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") < b:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") -- =~ s/(\|c[a-fA-F0-9]{8}|\|r)//g
-	end
+	-- local function icmp(a, b) -- ignore color
+	-- 	return a:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") < b:gsub("(%|c%x%x%x%x%x%x%x%x|%|r)", "") -- =~ s/(\|c[a-fA-F0-9]{8}|\|r)//g
+	-- end
 
 	local function IsSetIncluded(data)
 		local setA, setB = data[1], data[2]
@@ -431,16 +431,44 @@ do
 				local set = root:CreateButton(currentSet)
 				set:CreateTitle(currentSet)
 
+				local diff = {}
 				local count = #sets[currentSet]
 				local view = set:CreateButton(L["View (%d)"]:format(count))
 				view:SetEnabled(count > 0)
 				if count > 0 then
 					view:SetScrollMode(50 * 8)
 					view:CreateTitle(L["Addon List"])
-					sort(sets[currentSet], icmp)
+					sort(sets[currentSet])
 					for _, addonName in ipairs(sets[currentSet]) do
 						local _, _, _, loadable, reason = C_AddOns.GetAddOnInfo(addonName)
 						view:CreateButton(addonName):SetEnabled(loadable or reason ~= "MISSING")
+						if C_AddOns.GetAddOnEnableState(addonName, character) == 0 and (loadable or reason ~= "MISSING") then
+							diff[addonName] = "+"
+						end
+					end
+					for addonIndex = 1, C_AddOns.GetNumAddOns() do
+						local addonName, _, _, loadable, reason = C_AddOns.GetAddOnInfo(addonIndex)
+						if not IsAddonProtected(addonIndex) and not tContains(sets[currentSet], addonName) and C_AddOns.GetAddOnEnableState(addonName, character) > 0 and (loadable or reason ~= "MISSING") then
+							diff[addonName] = "-"
+						end
+					end
+				end
+
+				local numChanges = CountTable(diff)
+				local changes = set:CreateButton(L["Changes (%d)"]:format(numChanges))
+				changes:SetEnabled(numChanges > 0)
+				if numChanges > 0 then
+					changes:SetScrollMode(50 * 8)
+					changes:CreateTitle(L["Addon Changes"])
+					local kdiff = GetKeysArray(diff)
+					sort(kdiff)
+					for _, addonName in ipairs(kdiff) do
+						-- maybe dim lod addons (DIM_GREEN_FONT_COLOR / DIM_RED_FONT_COLOR)?
+						if diff[addonName] == "+" then
+							changes:CreateButton(("|cff19ff19+%s|r"):format(addonName))
+						else
+							changes:CreateButton(("|cffff2020-%s|r"):format(addonName))
+						end
 					end
 				end
 

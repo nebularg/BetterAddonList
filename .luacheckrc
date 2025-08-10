@@ -50,10 +50,13 @@ globals = {
 	"UnitGUID",
 	"UnitName",
 	"UpdateAddOnMemoryUsage",
+
 	"tContains",
-	"tostringall",
+	"CountTable",
+	"GetKeysArray",
 	"sort",
 	"wipe",
+	"tostringall",
 
 	"ADDON_BANNED_TOOLTIP",
 	"CANCEL",
