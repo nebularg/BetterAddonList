@@ -538,6 +538,33 @@ do
 		end
 	end
 
+	local function updateMemoryIcon(entry, enabled)
+		if enabled then
+			local memIcon = entry.Memory
+			local memory = GetAddOnMemoryUsage(entry:GetID())
+			entry.memoryUsage = memory
+			local usage = memory / 8192 -- just needed some baseline
+			if usage > 0.8 then
+				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
+			elseif usage > 0.6 then
+				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
+			elseif usage > 0.4 then
+				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
+			elseif usage > 0.2 then
+				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
+			elseif usage > 0.1 then
+				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
+			else
+				memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
+			end
+			memIcon:Show()
+		else
+			entry.memoryUsage = nil
+			entry.Memory:Hide()
+		end
+	end
+
+
 	local lockIcons = {}
 	local memIcons = {}
 	for i=1, MAX_ADDONS_DISPLAYED do
@@ -708,24 +735,6 @@ do
 						AddonList_SetStatus(entry, true, false, false)
 					end
 
-					local memory = GetAddOnMemoryUsage(addonIndex)
-					entry.memory = memory
-					local usage = memory / 8192 -- just needed some baseline!
-					if usage > 0.8 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem5]])
-					elseif usage > 0.6 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem4]])
-					elseif usage > 0.4 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem3]])
-					elseif usage > 0.2 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem2]])
-					elseif usage > 0.1 then
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem1]])
-					else
-						memIcon:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\mem0]])
-					end
-					memIcon:Show()
-
 					-- XXX undo TriStateCheckbox_SetState
 					if checkbox.state ~= 2 then
 						checkbox:SetChecked(true)
@@ -734,10 +743,9 @@ do
 						checkbox.AddonTooltip = nil
 						checkbox.state = 2
 					end
-				else
-					entry.memory = nil
-					memIcon:Hide()
 				end
+
+				updateMemoryIcon(entry, enabled and (not C_AddOns.IsAddOnLoadOnDemand(addonIndex) or C_AddOns.IsAddOnLoaded(addonIndex)))
 
 				local protected = IsAddonProtected(addonIndex)
 				lockIcon:SetShown(protected)

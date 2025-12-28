@@ -608,7 +608,8 @@ do
 
 	hooksecurefunc("AddonTooltip_Update", function(owner)
 		if owner.Memory then
-			updateMemoryIcon(owner, owner.Enabled:GetChecked())
+			local addonIndex = owner:GetID()
+			updateMemoryIcon(owner, owner.Enabled:GetChecked() and (not C_AddOns.IsAddOnLoadOnDemand(addonIndex) or C_AddOns.IsAddOnLoaded(addonIndex)))
 		end
 	end)
 
@@ -683,7 +684,7 @@ do
 			end
 		end
 
-		updateMemoryIcon(entry, enabled)
+		updateMemoryIcon(entry, enabled and (not C_AddOns.IsAddOnLoadOnDemand(addonIndex) or C_AddOns.IsAddOnLoaded(addonIndex)))
 
 		local protected = IsAddonProtected(addonIndex)
 		lockIcon:SetShown(protected)
