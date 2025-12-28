@@ -738,8 +738,11 @@ do
 					-- XXX undo TriStateCheckbox_SetState
 					if checkbox.state ~= 2 then
 						checkbox:SetChecked(true)
-						checkbox:SetVertexColor(1, 1, 1)
-						checkbox:SetDesaturated(false)
+						local checkedTexture = _G[checkbox:GetName() .. "CheckedTexture"]
+						if checkedTexture then
+							checkedTexture:SetVertexColor(1, 1, 1)
+							checkedTexture:SetDesaturated(false)
+						end
 						checkbox.AddonTooltip = nil
 						checkbox.state = 2
 					end
