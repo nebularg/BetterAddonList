@@ -272,119 +272,114 @@ StaticPopupDialogs["BETTER_ADDONLIST_SAVESET"] = {
 	text = L["Save the currently selected addons to %s?"],
 	button1 = YES,
 	button2 = CANCEL,
-	OnAccept = function(self) addon:SaveSet(self.data) end,
-	OnShow = function(self) CloseDropDownMenus(1) end,
-	OnHide = function(self) self.data = nil end,
+	OnAccept = function(dialog) addon:SaveSet(dialog.data) end,
+	OnShow = function(dialog) CloseDropDownMenus(1) end,
+	OnHide = function(dialog) dialog.data = nil end,
 	timeout = 0,
 	hideOnEscape = 1,
 	whileDead = 1,
 	exclusive = 1,
-	preferredIndex = 3,
 }
 
 StaticPopupDialogs["BETTER_ADDONLIST_DELETESET"] = {
 	text = L["Delete set %s?"],
 	button1 = YES,
 	button2 = CANCEL,
-	OnAccept = function(self) addon:DeleteSet(self.data) end,
-	OnShow = function(self) CloseDropDownMenus(1) end,
-	OnHide = function(self) self.data = nil end,
+	OnAccept = function(dialog) addon:DeleteSet(dialog.data) end,
+	OnShow = function(dialog) CloseDropDownMenus(1) end,
+	OnHide = function(dialog) dialog.data = nil end,
 	timeout = 0,
 	hideOnEscape = 1,
 	whileDead = 1,
 	exclusive = 1,
-	preferredIndex = 3,
 }
 
 StaticPopupDialogs["BETTER_ADDONLIST_NEWSET"] = {
 	text = L["Enter the name for the new set"],
 	button1 = OKAY,
 	button2 = CANCEL,
-	OnAccept = function(self)
-		local name = self:GetEditBox():GetText()
+	OnAccept = function(dialog)
+		local name = dialog:GetEditBox():GetText()
 		if sets[name] then
 			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
 			return
 		end
 		addon:SaveSet(name)
 	end,
-	EditBoxOnEnterPressed = function(self)
-		local name = self:GetParent():GetEditBox():GetText():trim()
-		self:GetParent():Hide()
+	EditBoxOnEnterPressed = function(editBox)
+		local name = editBox:GetText():trim()
+		editBox:GetParent():Hide()
 		if sets[name] then
 			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
 			return
 		end
 		addon:SaveSet(name)
 	end,
-	EditBoxOnEscapePressed = function(self)
-		self:GetParent():Hide()
+	EditBoxOnEscapePressed = function(editBox)
+		editBox:GetParent():Hide()
 	end,
-	OnShow = function(self)
+	OnShow = function(dialog)
 		CloseDropDownMenus(1)
-		self:GetEditBox():SetFocus()
+		dialog:GetEditBox():SetFocus()
 	end,
-	OnHide = function(self)
-		self:GetEditBox():SetText("")
+	OnHide = function(dialog)
+		dialog:GetEditBox():SetText("")
 	end,
 	timeout = 0,
 	hideOnEscape = 1,
 	exclusive = 1,
 	whileDead = 1,
 	hasEditBox = 1,
-	preferredIndex = 3,
 }
 
 StaticPopupDialogs["BETTER_ADDONLIST_RENAMESET"] = {
 	text = L["Enter the new name for %s"],
 	button1 = OKAY,
 	button2 = CANCEL,
-	OnAccept = function(self)
-		local text = self:GetEditBox():GetText()
-		addon:RenameSet(self.data, text)
-	end,
-	EditBoxOnEnterPressed = function(self)
-		local dialog = self:GetParent()
+	OnAccept = function(dialog)
 		local text = dialog:GetEditBox():GetText()
+		addon:RenameSet(dialog.data, text)
+	end,
+	EditBoxOnEnterPressed = function(editBox)
+		local dialog = editBox:GetParent()
+		local text = editBox:GetText()
 		addon:RenameSet(dialog.data, text)
 		dialog:Hide()
 	end,
-	EditBoxOnEscapePressed = function(self)
-		self:GetParent():Hide()
+	EditBoxOnEscapePressed = function(editBox)
+		editBox:GetParent():Hide()
 	end,
-	OnShow = function(self)
+	OnShow = function(dialog)
 		CloseDropDownMenus(1)
-		self:GetEditBox():SetFocus()
+		dialog:GetEditBox():SetFocus()
 	end,
-	OnHide = function(self)
-		self:GetEditBox():SetText("")
-		self.data = nil
+	OnHide = function(dialog)
+		dialog:GetEditBox():SetText("")
+		dialog.data = nil
 	end,
 	timeout = 0,
 	hideOnEscape = 1,
 	exclusive = 1,
 	whileDead = 1,
 	hasEditBox = 1,
-	preferredIndex = 3,
 }
 
 StaticPopupDialogs["BETTER_ADDONLIST_ERROR_NAME"] = {
 	text = L["There is already a set named \"%s\".\nPlease choose another name."],
 	button1 = OKAY,
 	button2 = CANCEL,
-	OnAccept = function(self)
-		local name, text = unpack(self.data)
+	OnAccept = function(dialog)
+		local name, text = unpack(dialog.data)
 		StaticPopup_Show(name, text)
 	end,
-	OnHide = function(self)
-		self.data = nil
+	OnHide = function(dialog)
+		dialog.data = nil
 	end,
 	timeout = 0,
 	hideOnEscape = 1,
 	whileDead = 1,
 	exclusive = 1,
 	showAlert = 1,
-	preferredIndex = 3,
 }
 
 -- sets menu
