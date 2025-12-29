@@ -632,7 +632,7 @@ do
 			GameTooltip:AddLine(notes, 1.0, 1.0, 1.0)
 			GameTooltip:AddLine(buildDeps(C_AddOns.GetAddOnDependencies(index)))
 
-			local memory = owner.memory
+			local memory = owner.memoryUsage
 			if memory then
 				local text
 				if memory > 1000 then
@@ -716,10 +716,11 @@ do
 
 			local lockIcon = lockIcons[i]
 			local memIcon = memIcons[i]
+			entry.Memory = memIcon
 
 			local addonIndex = entry:GetID()
 			if addonIndex > numAddons then
-				entry.memory = nil
+				entry.memoryUsage = nil
 				memIcon:Hide()
 				lockIcon:Hide()
 				checkbox:Show()
