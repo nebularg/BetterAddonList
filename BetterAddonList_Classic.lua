@@ -301,7 +301,7 @@ StaticPopupDialogs["BETTER_ADDONLIST_NEWSET"] = {
 	button1 = OKAY,
 	button2 = CANCEL,
 	OnAccept = function(self)
-		local name = self.editBox:GetText()
+		local name = self:GetEditBox():GetText()
 		if sets[name] then
 			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
 			return
@@ -309,7 +309,7 @@ StaticPopupDialogs["BETTER_ADDONLIST_NEWSET"] = {
 		addon:SaveSet(name)
 	end,
 	EditBoxOnEnterPressed = function(self)
-		local name = self:GetParent().editBox:GetText():trim()
+		local name = self:GetParent():GetEditBox():GetText():trim()
 		self:GetParent():Hide()
 		if sets[name] then
 			StaticPopup_Show("BETTER_ADDONLIST_ERROR_NAME", name, nil, {"BETTER_ADDONLIST_NEWSET"})
@@ -322,10 +322,10 @@ StaticPopupDialogs["BETTER_ADDONLIST_NEWSET"] = {
 	end,
 	OnShow = function(self)
 		CloseDropDownMenus(1)
-		self.editBox:SetFocus()
+		self:GetEditBox():SetFocus()
 	end,
 	OnHide = function(self)
-		self.editBox:SetText("")
+		self:GetEditBox():SetText("")
 	end,
 	timeout = 0,
 	hideOnEscape = 1,
@@ -340,12 +340,12 @@ StaticPopupDialogs["BETTER_ADDONLIST_RENAMESET"] = {
 	button1 = OKAY,
 	button2 = CANCEL,
 	OnAccept = function(self)
-		local text = self.editBox:GetText()
+		local text = self:GetEditBox():GetText()
 		addon:RenameSet(self.data, text)
 	end,
 	EditBoxOnEnterPressed = function(self)
 		local dialog = self:GetParent()
-		local text = dialog.editBox:GetText()
+		local text = dialog:GetEditBox():GetText()
 		addon:RenameSet(dialog.data, text)
 		dialog:Hide()
 	end,
@@ -354,10 +354,10 @@ StaticPopupDialogs["BETTER_ADDONLIST_RENAMESET"] = {
 	end,
 	OnShow = function(self)
 		CloseDropDownMenus(1)
-		self.editBox:SetFocus()
+		self:GetEditBox():SetFocus()
 	end,
 	OnHide = function(self)
-		self.editBox:SetText("")
+		self:GetEditBox():SetText("")
 		self.data = nil
 	end,
 	timeout = 0,
