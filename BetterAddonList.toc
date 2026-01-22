@@ -1,4 +1,4 @@
-## Interface: 110200
+## Interface: 120000, 120001
 ## Title: BetterAddonList
 ## Notes: Enhances the default AddOns list.
 ## Author: Neb

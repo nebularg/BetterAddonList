@@ -3,6 +3,7 @@ max_line_length = false
 codes = true
 exclude_files = {
 	"**/libs",
+	".**",
 }
 ignore = {
 	"11./SLASH_.*", -- Setting an undefined (Slash handler) global variable
