@@ -189,8 +189,8 @@ function addon:PLAYER_LOGIN()
 
 		local hideMemory = CreateFrame("Button", "BetterAddonListOptionHideIcons", AddonList)
 		hideMemory:SetFrameLevel(AddonList.TitleContainer:GetFrameLevel() + 1)
-		hideMemory:SetNormalTexture(4555550) -- inv_10_jewelcrafting_gem1leveling_cut_green
-		hideMemory:SetHighlightTexture(4555550)
+		hideMemory:SetNormalTexture([[Interface\AddOns\BetterAddonList\textures\inv_10_jewelcrafting_gem1leveling_cut_green]])
+		hideMemory:SetHighlightTexture([[Interface\AddOns\BetterAddonList\textures\inv_10_jewelcrafting_gem1leveling_cut_green]])
 		hideMemory:SetSize(20, 20)
 		hideMemory:SetPoint("LEFT", hideIcons, "RIGHT", 2, 0)
 		hideMemory:SetScript("OnClick", function(this)
